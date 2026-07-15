@@ -196,6 +196,7 @@ async function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'timeGridWeek',
+        timeZone: 'UTC',
         locale: 'es',
         headerToolbar: {
             left: 'prev,next today',
@@ -229,11 +230,18 @@ async function initCalendar() {
             }
         },
         eventClick: function(info) {
-            alert(info.event.extendedProps.description);
+            const modal = document.getElementById('appointmentModal');
+            const descEl = document.getElementById('modalDescription');
+            descEl.innerHTML = info.event.extendedProps.description.replace(/\n/g, '<br>');
+            modal.style.display = 'flex';
         }
     });
     
     calendar.render();
+}
+
+function closeModal() {
+    document.getElementById('appointmentModal').style.display = 'none';
 }
 
 // Start
