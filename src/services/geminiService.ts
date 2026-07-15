@@ -6,7 +6,7 @@ export class GeminiService {
     messageHistory: { role: "user" | "assistant"; content: string }[],
     currentMessage: string
   ): Promise<string> {
-    
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("Missing GEMINI_API_KEY");
@@ -27,9 +27,9 @@ Responde siempre basándote en esta información. Si te preguntan algo que no es
 
     try {
       // Usamos gemini-1.5-flash que es el modelo rápido y recomendado por defecto
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: systemPrompt 
+      const model = genAI.getGenerativeModel({
+        model: "gemini-3.5-flash",
+        systemInstruction: systemPrompt
       });
 
       // Transformar el historial al formato de Gemini
@@ -44,7 +44,7 @@ Responde siempre basándote en esta información. Si te preguntan algo que no es
 
       const result = await chat.sendMessage(currentMessage);
       const responseText = result.response.text();
-      
+
       return responseText || "Lo siento, no pude procesar tu mensaje.";
     } catch (error) {
       console.error("Error con Gemini:", error);
