@@ -18,9 +18,17 @@ export class GeminiService {
     const genAI = new GoogleGenerativeAI(apiKey);
     const businessInfo = await GoogleSheetsService.getBusinessInfo();
 
+    const currentDateStr = new Intl.DateTimeFormat('es-AR', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+      timeZone: 'America/Argentina/Buenos_Aires',
+    }).format(new Date());
+
     const systemPrompt = `Eres un asistente virtual para atención al cliente por WhatsApp. 
 Tu objetivo es ayudar con ventas, soporte técnico, agendar turnos y resolver dudas frecuentes.
 Debes mantener un tono formal, amigable y conciso.
+
+IMPORTANTE: Hoy es ${currentDateStr}. Todas las fechas relativas (mañana, la próxima semana) o menciones de días/meses deben calcularse a partir de este momento. Nunca asumas un año distinto al actual a menos que el usuario lo indique.
 
 Aquí tienes información específica del negocio (Horarios, precios, dirección):
 ${businessInfo}
