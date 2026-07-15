@@ -176,8 +176,12 @@ function switchTab(tab) {
             clearInterval(pollInterval);
             pollInterval = null;
         }
-        
         initCalendar();
+        if (calendar) {
+            setTimeout(() => {
+                calendar.render();
+            }, 50);
+        }
     }
 }
 
