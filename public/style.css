@@ -1,0 +1,234 @@
+:root {
+    --bg-app: #111b21;
+    --bg-panel: #202c33;
+    --bg-hover: #2a3942;
+    --bg-active: #2a3942;
+    --text-primary: #e9edef;
+    --text-secondary: #8696a0;
+    --border-color: #222d34;
+    --msg-in: #202c33;
+    --msg-out: #005c4b;
+    --accent: #00a884;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 30%;
+    min-width: 300px;
+    max-width: 400px;
+    background-color: var(--bg-panel);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 15px 20px;
+    background-color: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    height: 60px;
+}
+
+.sidebar-header h2 {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.search-bar {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: inherit;
+    outline: none;
+}
+
+.contacts-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.contact-item {
+    display: flex;
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.contact-item:hover {
+    background-color: var(--bg-hover);
+}
+
+.contact-item.active {
+    background-color: var(--bg-active);
+}
+
+.avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #64748b;
+    margin-right: 15px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.contact-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.contact-name {
+    font-weight: 500;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.contact-phone {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Chat Area */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #0b141a;
+    background-image: url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png');
+    background-size: initial;
+}
+
+.chat-header {
+    height: 60px;
+    background-color: var(--bg-panel);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chat-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.chat-user-info .avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+}
+
+.user-details h3 {
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+.user-details span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.messages-container {
+    flex: 1;
+    padding: 20px 5%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.message {
+    max-width: 65%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    position: relative;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.message.user {
+    align-self: flex-start;
+    background-color: var(--msg-in);
+    border-top-left-radius: 0;
+}
+
+.message.assistant {
+    align-self: flex-end;
+    background-color: var(--msg-out);
+    border-top-right-radius: 0;
+}
+
+.message-time {
+    display: block;
+    text-align: right;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.message.assistant .message-time {
+    color: rgba(255,255,255,0.6);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.16);
+    border-radius: 3px;
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisión Bot</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Contact List -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h2>Conversaciones</h2>
+            </header>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar contacto..." />
+            </div>
+            <div class="contacts-list" id="contactsList">
+                <!-- Contacts will be injected here via JS -->
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <header class="chat-header" id="chatHeader" style="display: none;">
+                <div class="chat-user-info">
+                    <div class="avatar-placeholder"></div>
+                    <div class="user-details">
+                        <h3 id="chatUserName"></h3>
+                        <span id="chatUserPhone"></span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="empty-state">
+                    Selecciona un chat para ver los mensajes.
+                </div>
+                <!-- Messages will be injected here via JS -->
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
