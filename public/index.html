@@ -15,51 +15,57 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
+        <!-- Top Navbar Navigation -->
         <nav class="main-nav">
-            <div class="nav-item active" id="navChats" onclick="switchTab('chats')">💬 Chats</div>
-            <div class="nav-item" id="navAgenda" onclick="switchTab('agenda')">📅 Agenda</div>
+            <div class="nav-brand">JCBot Panel</div>
+            <div class="nav-links">
+                <div class="nav-item active" id="navChats" onclick="switchTab('chats')">💬 Chats</div>
+                <div class="nav-item" id="navAgenda" onclick="switchTab('agenda')">📅 Agenda</div>
+            </div>
         </nav>
 
-        <!-- Sidebar: Contact List (Chats Tab) -->
-        <aside class="sidebar" id="chatsSidebar">
-            <header class="sidebar-header">
-                <h2>Conversaciones</h2>
-            </header>
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Buscar contacto..." />
-            </div>
-            <div class="contacts-list" id="contactsList">
-                <!-- Contacts will be injected here via JS -->
-            </div>
-        </aside>
+        <!-- Wrapper for the content below the navbar -->
+        <div class="main-content">
+            <!-- Sidebar: Contact List (Chats Tab) -->
+            <aside class="sidebar" id="chatsSidebar">
+                <header class="sidebar-header">
+                    <h2>Conversaciones</h2>
+                </header>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Buscar contacto..." />
+                </div>
+                <div class="contacts-list" id="contactsList">
+                    <!-- Contacts will be injected here via JS -->
+                </div>
+            </aside>
 
-        <!-- Main Chat Area -->
-        <main class="chat-area" id="chatArea">
-            <header class="chat-header" id="chatHeader" style="display: none;">
-                <div class="chat-user-info">
-                    <div class="avatar-placeholder"></div>
-                    <div class="user-details">
-                        <h3 id="chatUserName"></h3>
-                        <span id="chatUserPhone"></span>
+            <!-- Main Chat Area -->
+            <main class="chat-area" id="chatArea">
+                <header class="chat-header" id="chatHeader" style="display: none;">
+                    <div class="chat-user-info">
+                        <div class="avatar-placeholder"></div>
+                        <div class="user-details">
+                            <h3 id="chatUserName"></h3>
+                            <span id="chatUserPhone"></span>
+                        </div>
                     </div>
+                </header>
+                
+                <div class="messages-container" id="messagesContainer">
+                    <div class="empty-state">
+                        Selecciona un chat para ver los mensajes.
+                    </div>
+                    <!-- Messages will be injected here via JS -->
                 </div>
-            </header>
-            
-            <div class="messages-container" id="messagesContainer">
-                <div class="empty-state">
-                    Selecciona un chat para ver los mensajes.
-                </div>
-                <!-- Messages will be injected here via JS -->
-            </div>
-        </main>
+            </main>
 
-        <!-- Agenda Area -->
-        <main class="agenda-area" id="agendaArea" style="display: none;">
-            <div class="agenda-container">
-                <div id='calendar'></div>
-            </div>
-        </main>
+            <!-- Agenda Area -->
+            <main class="agenda-area" id="agendaArea" style="display: none;">
+                <div class="agenda-container">
+                    <div id='calendar'></div>
+                </div>
+            </main>
+        </div>
     </div>
 
     <script src="script.js"></script>
