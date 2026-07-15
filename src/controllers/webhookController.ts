@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { WhatsappService } from "../services/whatsappService";
-import { ClaudeService } from "../services/claudeService";
+import { GeminiService } from "../services/geminiService";
 import { ConversationService } from "../services/conversationService";
 
 export const verifyWebhook = (req: Request, res: Response) => {
@@ -60,7 +60,7 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
             content: h.content
           }));
 
-        const reply = await ClaudeService.generateResponse(mappedHistory, msgBody);
+        const reply = await GeminiService.generateResponse(mappedHistory, msgBody);
 
         await WhatsappService.sendMessage(from, reply);
         await ConversationService.addMessage(user.id, "assistant", reply);

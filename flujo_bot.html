@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujo de Trabajo del Asistente Virtual</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --secondary: #10b981;
+            --whatsapp: #25D366;
+            --ai: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .flow-container {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        /* Línea conectora central */
+        .flow-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            background: linear-gradient(to bottom, var(--whatsapp), var(--primary), var(--ai), var(--secondary), var(--whatsapp));
+            transform: translateX(-50%);
+            border-radius: 2px;
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step.left .content {
+            margin-right: 50%;
+            padding-right: 40px;
+            text-align: right;
+        }
+
+        .step.right .content {
+            margin-left: 50%;
+            padding-left: 40px;
+            text-align: left;
+        }
+
+        .icon-wrapper {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background-color: var(--card-bg);
+            border: 4px solid var(--bg-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .step:hover .icon-wrapper {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            width: calc(100% - 80px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .step:hover .content {
+            transform: translateY(-5px);
+        }
+
+        .content h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step.left .content h3 {
+            justify-content: flex-end;
+        }
+
+        .content p {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .tag.whatsapp { background: rgba(37, 211, 102, 0.2); color: #4ade80; }
+        .tag.server { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .tag.db { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .tag.sheets { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .tag.ai { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+
+        @media (max-width: 768px) {
+            .flow-container::before {
+                left: 30px;
+            }
+            .icon-wrapper {
+                left: 30px;
+            }
+            .step.left .content,
+            .step.right .content {
+                margin: 0 0 0 70px;
+                padding: 20px;
+                text-align: left;
+                width: auto;
+            }
+            .step.left .content h3 {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Flujo del Asistente Virtual</h1>
+            <p>Descubre cómo funciona nuestro sistema inteligente de atención al cliente paso a paso.</p>
+        </div>
+
+        <div class="flow-container">
+            
+            <!-- Paso 1 -->
+            <div class="step left">
+                <div class="icon-wrapper" style="color: var(--whatsapp);">📱</div>
+                <div class="content">
+                    <span class="tag whatsapp">1. Interacción del Cliente</span>
+                    <h3>Mensaje de WhatsApp</h3>
+                    <p>El cliente envía un mensaje, pregunta o solicitud a tu número de WhatsApp Business, igual que lo haría con cualquier otra persona.</p>
+                </div>
+            </div>
+
+            <!-- Paso 2 -->
+            <div class="step right">
+                <div class="icon-wrapper" style="color: var(--primary);">🌐</div>
+                <div class="content">
+                    <span class="tag server">2. Recepción (Webhook)</span>
+                    <h3>Conexión con el Servidor</h3>
+                    <p>Meta (WhatsApp API) detecta el mensaje y lo envía de forma instantánea y segura a nuestro servidor inteligente a través de un Webhook.</p>
+                </div>
+            </div>
+
+            <!-- Paso 3 -->
+            <div class="step left">
+                <div class="icon-wrapper" style="color: #f59e0b;">🗄️</div>
+                <div class="content">
+                    <span class="tag db">3. Contexto e Identificación</span>
+                    <h3>Base de Datos</h3>
+                    <p>El sistema identifica al cliente por su número, guarda el mensaje y recupera el <strong>historial de la conversación</strong> para entender el contexto (de qué venían hablando).</p>
+                </div>
+            </div>
+
+            <!-- Paso 4 -->
+            <div class="step right">
+                <div class="icon-wrapper" style="color: var(--secondary);">📊</div>
+                <div class="content">
+                    <span class="tag sheets">4. Información en Tiempo Real</span>
+                    <h3>Google Sheets</h3>
+                    <p>El bot consulta una hoja de cálculo de Google (actualizable por ti) para obtener la <strong>información fresca del negocio</strong>: precios actuales, horarios, dirección y promociones.</p>
+                </div>
+            </div>
+
+            <!-- Paso 5 -->
+            <div class="step left">
+                <div class="icon-wrapper" style="color: var(--ai);">🧠</div>
+                <div class="content">
+                    <span class="tag ai">5. Procesamiento Inteligente</span>
+                    <h3>Inteligencia Artificial (Claude 3)</h3>
+                    <p>Se envía a la IA avanzada: el mensaje actual + el historial de chat + los datos del negocio. La IA analiza todo y <strong>redacta una respuesta perfecta, natural y amigable</strong>.</p>
+                </div>
+            </div>
+
+            <!-- Paso 6 -->
+            <div class="step right">
+                <div class="icon-wrapper" style="color: var(--whatsapp);">✉️</div>
+                <div class="content">
+                    <span class="tag whatsapp">6. Respuesta Automática</span>
+                    <h3>Envío al Cliente</h3>
+                    <p>La respuesta generada por la IA se envía de vuelta al cliente mediante la API de WhatsApp, logrando una atención rápida, precisa y 24/7.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Pequeña animación al hacer scroll
+        const elements = document.querySelectorAll('.step');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        elements.forEach(el => {
+            el.style.opacity = 0;
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

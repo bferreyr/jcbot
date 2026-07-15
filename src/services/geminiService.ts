@@ -1,19 +1,19 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GoogleSheetsService } from "./googleSheetsService";
 
-export class ClaudeService {
+export class GeminiService {
   static async generateResponse(
     messageHistory: { role: "user" | "assistant"; content: string }[],
     currentMessage: string
   ): Promise<string> {
     
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("Missing ANTHROPIC_API_KEY");
-      return "Error: API de Claude no configurada.";
+      console.error("Missing GEMINI_API_KEY");
+      return "Error: API de Gemini no configurada.";
     }
 
-    const anthropic = new Anthropic({ apiKey });
+    const genAI = new GoogleGenerativeAI(apiKey);
     const businessInfo = await GoogleSheetsService.getBusinessInfo();
 
     const systemPrompt = `Eres un asistente virtual para atención al cliente por WhatsApp. 
@@ -25,20 +25,29 @@ ${businessInfo}
 
 Responde siempre basándote en esta información. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. Si te piden agendar un turno, indícales el horario disponible e invítalos a confirmar (por el momento de manera informativa).`;
 
-    const messages = [...messageHistory, { role: "user" as const, content: currentMessage }];
-
     try {
-      const response = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: messages,
+      // Usamos gemini-1.5-flash que es el modelo rápido y recomendado por defecto
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: systemPrompt 
       });
 
-      const contentBlock = response.content.find(block => block.type === 'text');
-      return contentBlock && 'text' in contentBlock ? contentBlock.text : "Lo siento, no pude procesar tu mensaje.";
+      // Transformar el historial al formato de Gemini
+      const formattedHistory = messageHistory.map(msg => ({
+        role: msg.role === "user" ? "user" : "model",
+        parts: [{ text: msg.content }]
+      }));
+
+      const chat = model.startChat({
+        history: formattedHistory,
+      });
+
+      const result = await chat.sendMessage(currentMessage);
+      const responseText = result.response.text();
+      
+      return responseText || "Lo siento, no pude procesar tu mensaje.";
     } catch (error) {
-      console.error("Error con Claude:", error);
+      console.error("Error con Gemini:", error);
       return "Lo siento, estoy teniendo problemas técnicos en este momento. Intenta de nuevo más tarde.";
     }
   }
