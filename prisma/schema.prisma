@@ -14,13 +14,25 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  messages  Message[]
+  messages      Message[]
+  appointments  Appointment[]
 }
 
 model Message {
   id        String   @id @default(uuid())
   role      String   // "user" or "assistant"
   content   String
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  date      DateTime
+  reason    String
+  status    String   @default("CONFIRMED")
   createdAt DateTime @default(now())
   
   userId    String

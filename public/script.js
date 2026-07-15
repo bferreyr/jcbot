@@ -1,5 +1,12 @@
 let currentUserId = null;
 let pollInterval = null;
+let calendar = null;
+
+const navChats = document.getElementById('navChats');
+const navAgenda = document.getElementById('navAgenda');
+const chatsSidebar = document.getElementById('chatsSidebar');
+const chatArea = document.getElementById('chatArea');
+const agendaArea = document.getElementById('agendaArea');
 
 const contactsList = document.getElementById('contactsList');
 const messagesContainer = document.getElementById('messagesContainer');
@@ -144,6 +151,85 @@ function renderMessages(messages, silent) {
     
     // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Navigation Tabs
+function switchTab(tab) {
+    if (tab === 'chats') {
+        navChats.classList.add('active');
+        navAgenda.classList.remove('active');
+        chatsSidebar.style.display = 'flex';
+        chatArea.style.display = 'flex';
+        agendaArea.style.display = 'none';
+        
+        if (currentUserId && !pollInterval) {
+            pollInterval = setInterval(() => loadMessages(currentUserId, true), 5000);
+        }
+    } else if (tab === 'agenda') {
+        navChats.classList.remove('active');
+        navAgenda.classList.add('active');
+        chatsSidebar.style.display = 'none';
+        chatArea.style.display = 'none';
+        agendaArea.style.display = 'flex';
+        
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        
+        initCalendar();
+    }
+}
+
+// Calendar Init
+async function initCalendar() {
+    if (calendar) {
+        // Just refresh events if already initialized
+        calendar.refetchEvents();
+        return;
+    }
+    
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        locale: 'es',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        slotMinTime: "09:00:00",
+        slotMaxTime: "19:00:00",
+        allDaySlot: false,
+        height: '100%',
+        events: async function(info, successCallback, failureCallback) {
+            try {
+                const res = await fetch('/api/appointments');
+                const appointments = await res.json();
+                
+                const events = appointments.map(app => {
+                    const clientName = app.user.name || app.user.phone;
+                    return {
+                        id: app.id,
+                        title: `${clientName} - ${app.reason}`,
+                        start: app.date,
+                        // Assumes 1 hour duration
+                        end: new Date(new Date(app.date).getTime() + 60 * 60 * 1000).toISOString(),
+                        description: `Motivo: ${app.reason}\nTeléfono: ${app.user.phone}\nNombre: ${app.user.name || 'N/A'}`,
+                    };
+                });
+                successCallback(events);
+            } catch (error) {
+                console.error("Error fetching appointments:", error);
+                failureCallback(error);
+            }
+        },
+        eventClick: function(info) {
+            alert(info.event.extendedProps.description);
+        }
+    });
+    
+    calendar.render();
 }
 
 // Start

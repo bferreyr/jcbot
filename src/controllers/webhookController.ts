@@ -60,7 +60,7 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
             content: h.content
           }));
 
-        const reply = await GeminiService.generateResponse(mappedHistory, msgBody);
+        const reply = await GeminiService.generateResponse(user.id, mappedHistory, msgBody);
 
         await WhatsappService.sendMessage(from, reply);
         await ConversationService.addMessage(user.id, "assistant", reply);

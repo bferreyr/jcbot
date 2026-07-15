@@ -8,11 +8,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FullCalendar -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js'></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar: Contact List -->
-        <aside class="sidebar">
+        <!-- Sidebar Navigation -->
+        <nav class="main-nav">
+            <div class="nav-item active" id="navChats" onclick="switchTab('chats')">💬 Chats</div>
+            <div class="nav-item" id="navAgenda" onclick="switchTab('agenda')">📅 Agenda</div>
+        </nav>
+
+        <!-- Sidebar: Contact List (Chats Tab) -->
+        <aside class="sidebar" id="chatsSidebar">
             <header class="sidebar-header">
                 <h2>Conversaciones</h2>
             </header>
@@ -25,7 +35,7 @@
         </aside>
 
         <!-- Main Chat Area -->
-        <main class="chat-area">
+        <main class="chat-area" id="chatArea">
             <header class="chat-header" id="chatHeader" style="display: none;">
                 <div class="chat-user-info">
                     <div class="avatar-placeholder"></div>
@@ -41,6 +51,13 @@
                     Selecciona un chat para ver los mensajes.
                 </div>
                 <!-- Messages will be injected here via JS -->
+            </div>
+        </main>
+
+        <!-- Agenda Area -->
+        <main class="agenda-area" id="agendaArea" style="display: none;">
+            <div class="agenda-container">
+                <div id='calendar'></div>
             </div>
         </main>
     </div>

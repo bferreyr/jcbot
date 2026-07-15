@@ -38,4 +38,22 @@ router.get("/users/:id/messages", async (req, res) => {
   }
 });
 
+// Get all appointments
+router.get("/appointments", async (req, res) => {
+  try {
+    const appointments = await prisma.appointment.findMany({
+      include: {
+        user: true // Include user data to show name/phone
+      },
+      orderBy: {
+        date: "asc"
+      }
+    });
+    res.json(appointments);
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;
