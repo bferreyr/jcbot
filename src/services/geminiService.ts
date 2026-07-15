@@ -33,13 +33,33 @@ Responde siempre basándote en esta información. Si te preguntan algo que no es
       });
 
       // Transformar el historial al formato de Gemini
-      const formattedHistory = messageHistory.map(msg => ({
+      let formattedHistory = messageHistory.map(msg => ({
         role: msg.role === "user" ? "user" : "model",
         parts: [{ text: msg.content }]
       }));
 
+      // Gemini requiere que el historial comience siempre con el rol 'user'
+      while (formattedHistory.length > 0 && formattedHistory[0].role !== "user") {
+        formattedHistory.shift();
+      }
+
+      // Además, no soporta mensajes del mismo rol seguidos. Fusionamos los consecutivos.
+      const validHistory: { role: string; parts: { text: string }[] }[] = [];
+      for (const msg of formattedHistory) {
+        if (validHistory.length === 0) {
+          validHistory.push(msg);
+        } else {
+          const lastMsg = validHistory[validHistory.length - 1];
+          if (lastMsg.role === msg.role) {
+            lastMsg.parts[0].text += "\n" + msg.parts[0].text;
+          } else {
+            validHistory.push(msg);
+          }
+        }
+      }
+
       const chat = model.startChat({
-        history: formattedHistory,
+        history: validHistory,
       });
 
       const result = await chat.sendMessage(currentMessage);
