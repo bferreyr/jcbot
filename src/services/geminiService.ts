@@ -34,7 +34,9 @@ Aquí tienes información específica del negocio (Horarios, precios, dirección
 ${businessInfo}
 
 Responde siempre basándote en esta información. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
-Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente.`;
+Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente.
+Para consultar el estado de una reparación, utiliza check_repair_status pidiendo al cliente su DNI o código de seguimiento.
+Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.`;
 
     try {
       const tools: Tool[] = [
@@ -62,6 +64,28 @@ Si el cliente desea agendar un turno, primero verifica la disponibilidad con che
                   reason: { type: SchemaType.STRING, description: "Motivo del turno" },
                 },
                 required: ["date", "time", "reason"],
+              },
+            },
+            {
+              name: "check_repair_status",
+              description: "Busca el estado de una reparación en la base de datos usando el DNI, número de seguimiento o nombre del cliente.",
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  query: { type: SchemaType.STRING, description: "El DNI, nombre o código a buscar." },
+                },
+                required: ["query"],
+              },
+            },
+            {
+              name: "get_plan_canje_info",
+              description: "Busca la cotización o información de plan canje para un modelo de celular específico.",
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  model: { type: SchemaType.STRING, description: "El modelo del equipo (ej: iPhone 13, S23 Ultra)." },
+                },
+                required: ["model"],
               },
             },
           ],
@@ -119,6 +143,12 @@ Si el cliente desea agendar un turno, primero verifica la disponibilidad con che
         } else if (call.name === "book_appointment") {
           const { date, time, reason } = args;
           apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
+        } else if (call.name === "check_repair_status") {
+          const query = args.query;
+          apiResponse = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, "Hoja 1!A:Z", query as string);
+        } else if (call.name === "get_plan_canje_info") {
+          const model = args.model;
+          apiResponse = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, "Hoja 1!A:Z", model as string);
         }
 
         // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario

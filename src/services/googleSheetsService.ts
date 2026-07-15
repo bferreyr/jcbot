@@ -40,4 +40,63 @@ export class GoogleSheetsService {
       return "No se pudo obtener información del negocio por un error de conexión.";
     }
   }
+
+  /**
+   * Busca un término en una planilla y devuelve las filas coincidentes.
+   * Útil para buscar estados de reparación o precios de plan canje.
+   * @param spreadsheetId El ID de la planilla
+   * @param range El rango a leer (ej: "Hoja1!A:Z")
+   * @param query El término de búsqueda (ej: DNI o Modelo)
+   */
+  static async searchInSheet(spreadsheetId: string | undefined, range: string, query: string): Promise<string> {
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_PATH || !spreadsheetId) {
+      return "Error: La planilla no está configurada.";
+    }
+    
+    try {
+      const auth = this.getAuthClient();
+      const sheets = google.sheets({ version: "v4", auth });
+      
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range,
+      });
+
+      const rows = response.data.values;
+      if (!rows || rows.length === 0) {
+        return "La planilla está vacía.";
+      }
+
+      // Asumimos que la fila 0 tiene los encabezados
+      const headers = rows[0];
+      const results = [];
+      const lowerQuery = query.toLowerCase();
+
+      // Buscar a partir de la fila 1 (ignorando encabezados)
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        // Revisar si alguna celda contiene la query
+        const matches = row.some(cell => cell && cell.toString().toLowerCase().includes(lowerQuery));
+        
+        if (matches) {
+          // Formatear la fila encontrada con sus encabezados
+          const formattedRow = row.map((cell, index) => {
+            const header = headers[index] || `Columna ${index + 1}`;
+            return `${header}: ${cell}`;
+          }).join(" | ");
+          
+          results.push(formattedRow);
+        }
+      }
+
+      if (results.length === 0) {
+        return `No se encontraron resultados para "${query}".`;
+      }
+
+      return `Resultados encontrados:\n` + results.join("\n");
+    } catch (error) {
+      console.error("Error searching in Google Sheets:", error);
+      return "Hubo un error de conexión al buscar en la planilla.";
+    }
+  }
 }
