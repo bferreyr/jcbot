@@ -42,13 +42,12 @@ export class GoogleSheetsService {
   }
 
   /**
-   * Busca un término en una planilla y devuelve las filas coincidentes.
-   * Útil para buscar estados de reparación o precios de plan canje.
+   * Busca un término en TODAS las pestañas de una planilla.
+   * Útil para buscar estados de reparación o precios de plan canje sin importar el nombre de la hoja.
    * @param spreadsheetId El ID de la planilla
-   * @param range El rango a leer (ej: "Hoja1!A:Z")
    * @param query El término de búsqueda (ej: DNI o Modelo)
    */
-  static async searchInSheet(spreadsheetId: string | undefined, range: string, query: string): Promise<string> {
+  static async searchInSheet(spreadsheetId: string | undefined, query: string): Promise<string> {
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_PATH || !spreadsheetId) {
       return "Error: La planilla no está configurada.";
     }
@@ -57,40 +56,58 @@ export class GoogleSheetsService {
       const auth = this.getAuthClient();
       const sheets = google.sheets({ version: "v4", auth });
       
-      const response = await sheets.spreadsheets.values.get({
+      // 1. Obtener la metadata para saber qué hojas (pestañas) existen
+      const meta = await sheets.spreadsheets.get({ spreadsheetId });
+      if (!meta.data.sheets || meta.data.sheets.length === 0) {
+        return "La planilla no tiene hojas.";
+      }
+      
+      // Extraer los nombres de todas las hojas
+      const sheetNames = meta.data.sheets.map(s => s.properties?.title).filter(title => title) as string[];
+      
+      // 2. Obtener los datos de todas las hojas de una sola vez
+      const response = await sheets.spreadsheets.values.batchGet({
         spreadsheetId,
-        range,
+        ranges: sheetNames,
       });
 
-      const rows = response.data.values;
-      if (!rows || rows.length === 0) {
+      const valueRanges = response.data.valueRanges;
+      if (!valueRanges || valueRanges.length === 0) {
         return "La planilla está vacía.";
       }
 
-      // Asumimos que la fila 0 tiene los encabezados
-      const headers = rows[0];
       const results = [];
       const lowerQuery = query.toLowerCase();
 
-      // Buscar a partir de la fila 1 (ignorando encabezados)
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        // Revisar si alguna celda contiene la query
-        const matches = row.some(cell => cell && cell.toString().toLowerCase().includes(lowerQuery));
+      // 3. Buscar en cada pestaña
+      for (let v = 0; v < valueRanges.length; v++) {
+        const rows = valueRanges[v].values;
+        if (!rows || rows.length === 0) continue;
         
-        if (matches) {
-          // Formatear la fila encontrada con sus encabezados
-          const formattedRow = row.map((cell, index) => {
-            const header = headers[index] || `Columna ${index + 1}`;
-            return `${header}: ${cell}`;
-          }).join(" | ");
+        const sheetName = sheetNames[v];
+        // Asumimos que la fila 0 de cada pestaña tiene los encabezados
+        const headers = rows[0];
+
+        // Buscar a partir de la fila 1 (ignorando encabezados)
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          // Revisar si alguna celda contiene la query
+          const matches = row.some(cell => cell && cell.toString().toLowerCase().includes(lowerQuery));
           
-          results.push(formattedRow);
+          if (matches) {
+            // Formatear la fila encontrada con sus encabezados
+            const formattedRow = row.map((cell, index) => {
+              const header = headers[index] || `Columna ${index + 1}`;
+              return `${header}: ${cell}`;
+            }).join(" | ");
+            
+            results.push(`[${sheetName}] ${formattedRow}`);
+          }
         }
       }
 
       if (results.length === 0) {
-        return `No se encontraron resultados para "${query}".`;
+        return `No se encontraron resultados para "${query}" en ninguna pestaña.`;
       }
 
       return `Resultados encontrados:\n` + results.join("\n");

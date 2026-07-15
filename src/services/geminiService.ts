@@ -145,10 +145,10 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
           apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
         } else if (call.name === "check_repair_status") {
           const query = args.query;
-          apiResponse = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, "Hoja 1!A:Z", query as string);
+          apiResponse = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, query as string);
         } else if (call.name === "get_plan_canje_info") {
           const model = args.model;
-          apiResponse = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, "Hoja 1!A:Z", model as string);
+          apiResponse = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, model as string);
         }
 
         // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
