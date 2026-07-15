@@ -28,7 +28,7 @@ Responde siempre basándote en esta información. Si te preguntan algo que no es
     try {
       // Usamos gemini-1.5-flash que es el modelo rápido y recomendado por defecto
       const model = genAI.getGenerativeModel({
-        model: "gemini-3.5-flash",
+        model: "gemini-3.1-flash-lite",
         systemInstruction: systemPrompt
       });
 
