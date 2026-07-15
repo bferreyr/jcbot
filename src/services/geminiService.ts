@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, FunctionDeclarationSchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType, Tool } from "@google/generative-ai";
 import { GoogleSheetsService } from "./googleSheetsService";
 import { AppointmentService } from "./appointmentService";
 
@@ -29,16 +29,16 @@ Responde siempre basándote en esta información. Si te preguntan algo que no es
 Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente.`;
 
     try {
-      const tools = [
+      const tools: Tool[] = [
         {
           functionDeclarations: [
             {
               name: "check_availability",
               description: "Revisa los horarios de turno disponibles para una fecha.",
               parameters: {
-                type: FunctionDeclarationSchemaType.OBJECT,
+                type: SchemaType.OBJECT,
                 properties: {
-                  date: { type: FunctionDeclarationSchemaType.STRING, description: "Fecha en formato YYYY-MM-DD" },
+                  date: { type: SchemaType.STRING, description: "Fecha en formato YYYY-MM-DD" },
                 },
                 required: ["date"],
               },
@@ -47,11 +47,11 @@ Si el cliente desea agendar un turno, primero verifica la disponibilidad con che
               name: "book_appointment",
               description: "Reserva un turno para el usuario.",
               parameters: {
-                type: FunctionDeclarationSchemaType.OBJECT,
+                type: SchemaType.OBJECT,
                 properties: {
-                  date: { type: FunctionDeclarationSchemaType.STRING, description: "Fecha en formato YYYY-MM-DD" },
-                  time: { type: FunctionDeclarationSchemaType.STRING, description: "Hora en formato HH:mm" },
-                  reason: { type: FunctionDeclarationSchemaType.STRING, description: "Motivo del turno" },
+                  date: { type: SchemaType.STRING, description: "Fecha en formato YYYY-MM-DD" },
+                  time: { type: SchemaType.STRING, description: "Hora en formato HH:mm" },
+                  reason: { type: SchemaType.STRING, description: "Motivo del turno" },
                 },
                 required: ["date", "time", "reason"],
               },
@@ -103,12 +103,13 @@ Si el cliente desea agendar un turno, primero verifica la disponibilidad con che
       if (call) {
         // Ejecutar la función solicitada por Gemini
         let apiResponse = "";
+        const args = call.args as any;
         
         if (call.name === "check_availability") {
-          const { date } = call.args;
+          const date = args.date;
           apiResponse = await AppointmentService.checkAvailability(date as string);
         } else if (call.name === "book_appointment") {
-          const { date, time, reason } = call.args;
+          const { date, time, reason } = args;
           apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
         }
 

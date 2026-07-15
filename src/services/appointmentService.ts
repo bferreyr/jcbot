@@ -40,7 +40,7 @@ export class AppointmentService {
         const hourStr = `${hour.toString().padStart(2, '0')}:00`;
         
         // Verificar si existe algún turno a esa hora en la base de datos
-        const isOccupied = appointments.some(app => {
+        const isOccupied = appointments.some((app: any) => {
           return app.date.getUTCHours() === hour;
         });
 
