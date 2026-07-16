@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supervisión Bot</title>
+    <title>JCBot - Celulares y Servicio Técnico</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <!-- FullCalendar -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -17,10 +19,23 @@
     <div class="app-container">
         <!-- Top Navbar Navigation -->
         <nav class="main-nav">
-            <div class="nav-brand">JCBot Panel</div>
-            <div class="nav-links">
-                <div class="nav-item active" id="navChats" onclick="switchTab('chats')">💬 Chats</div>
-                <div class="nav-item" id="navAgenda" onclick="switchTab('agenda')">📅 Agenda</div>
+            <div class="nav-brand">
+                <i class='bx bx-mobile-vibration nav-logo-icon'></i>
+                <span>JCBot Panel</span>
+            </div>
+            
+            <!-- Mobile Toggle Menu -->
+            <div class="mobile-toggle" id="mobileToggle" onclick="toggleMobileMenu()">
+                <i class='bx bx-menu'></i>
+            </div>
+
+            <div class="nav-links" id="navLinks">
+                <div class="nav-item active" id="navChats" onclick="switchTab('chats')">
+                    <i class='bx bx-message-rounded-dots'></i> Chats
+                </div>
+                <div class="nav-item" id="navAgenda" onclick="switchTab('agenda')">
+                    <i class='bx bx-calendar'></i> Agenda
+                </div>
             </div>
         </nav>
 
@@ -32,7 +47,10 @@
                     <h2>Conversaciones</h2>
                 </header>
                 <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Buscar contacto..." />
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchInput" placeholder="Buscar contacto..." />
+                    </div>
                 </div>
                 <div class="contacts-list" id="contactsList">
                     <!-- Contacts will be injected here via JS -->
@@ -42,8 +60,11 @@
             <!-- Main Chat Area -->
             <main class="chat-area" id="chatArea">
                 <header class="chat-header" id="chatHeader" style="display: none;">
+                    <button class="mobile-back-btn" onclick="toggleSidebar()" style="display:none; background:none; border:none; color:var(--text-primary); font-size:1.5rem; margin-right:15px; cursor:pointer;">
+                        <i class='bx bx-arrow-back'></i>
+                    </button>
                     <div class="chat-user-info">
-                        <div class="avatar-placeholder"></div>
+                        <div class="avatar-placeholder" id="chatAvatar"></div>
                         <div class="user-details">
                             <h3 id="chatUserName"></h3>
                             <span id="chatUserPhone"></span>
@@ -53,7 +74,8 @@
                 
                 <div class="messages-container" id="messagesContainer">
                     <div class="empty-state">
-                        Selecciona un chat para ver los mensajes.
+                        <div class="empty-icon"><i class='bx bx-chat'></i></div>
+                        <p>Selecciona un chat para ver los mensajes.</p>
                     </div>
                     <!-- Messages will be injected here via JS -->
                 </div>
@@ -61,7 +83,11 @@
 
             <!-- Agenda Area -->
             <main class="agenda-area" id="agendaArea" style="display: none;">
-                <div class="agenda-container">
+                <header class="agenda-header">
+                    <h2>Gestión de Turnos</h2>
+                    <p>Visualiza y administra las citas de servicio técnico.</p>
+                </header>
+                <div class="agenda-container glass-panel">
                     <div id='calendar'></div>
                 </div>
             </main>
@@ -70,10 +96,18 @@
 
     <!-- Modal para los turnos -->
     <div id="appointmentModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h3 id="modalTitle">Detalle del Turno</h3>
-            <p id="modalDescription"></p>
-            <button onclick="closeModal()" class="btn-primary">Cerrar</button>
+        <div class="modal-content glass-modal">
+            <button class="close-modal-btn" onclick="closeModal()"><i class='bx bx-x'></i></button>
+            <div class="modal-header">
+                <div class="modal-icon"><i class='bx bx-calendar-check'></i></div>
+                <h3 id="modalTitle">Detalle del Turno</h3>
+            </div>
+            <div class="modal-body" id="modalDescription">
+                <!-- Data injected via JS -->
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal()" class="btn-primary">Aceptar</button>
+            </div>
         </div>
     </div>
 

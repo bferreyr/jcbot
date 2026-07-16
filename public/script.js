@@ -14,6 +14,26 @@ const chatHeader = document.getElementById('chatHeader');
 const chatUserName = document.getElementById('chatUserName');
 const chatUserPhone = document.getElementById('chatUserPhone');
 const searchInput = document.getElementById('searchInput');
+const navLinks = document.getElementById('navLinks');
+
+// Mobile Menu Toggle
+function toggleMobileMenu() {
+    navLinks.classList.toggle('show');
+}
+
+// Sidebar toggle on mobile
+function toggleSidebar() {
+    if (window.innerWidth <= 768) {
+        chatsSidebar.classList.toggle('open');
+    }
+}
+
+// Open sidebar initially on mobile if in chats view
+function initMobileView() {
+    if (window.innerWidth <= 768 && navChats.classList.contains('active')) {
+        chatsSidebar.classList.add('open');
+    }
+}
 
 // Initialize
 async function init() {
@@ -22,6 +42,8 @@ async function init() {
     searchInput.addEventListener('input', (e) => {
         filterUsers(e.target.value);
     });
+    
+    initMobileView();
 }
 
 // Fetch users from API
@@ -39,7 +61,7 @@ function renderUsers(users) {
     contactsList.innerHTML = '';
     
     if (users.length === 0) {
-        contactsList.innerHTML = '<div style="padding: 20px; color: #8696a0; text-align: center;">No hay conversaciones.</div>';
+        contactsList.innerHTML = '<div style="padding: 20px; color: var(--text-secondary); text-align: center;">No hay conversaciones.</div>';
         return;
     }
 
@@ -55,7 +77,7 @@ function renderUsers(users) {
             <div class="avatar-placeholder">${initial}</div>
             <div class="contact-info">
                 <div class="contact-name">${user.name || 'Desconocido'}</div>
-                <div class="contact-phone">${user.phone}</div>
+                <div class="contact-phone"><i class='bx bx-phone'></i> ${user.phone}</div>
             </div>
         `;
         
@@ -87,13 +109,18 @@ function selectUser(user) {
     // Update Header
     chatHeader.style.display = 'flex';
     chatUserName.textContent = user.name || 'Desconocido';
-    chatUserPhone.textContent = user.phone;
+    chatUserPhone.innerHTML = `<i class='bx bx-phone'></i> ${user.phone}`;
     
     const initial = (user.name ? user.name.charAt(0) : user.phone.charAt(0)).toUpperCase();
-    chatHeader.querySelector('.avatar-placeholder').textContent = initial;
+    document.getElementById('chatAvatar').textContent = initial;
     
     // Load Messages
     loadMessages(user.id);
+    
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) {
+        chatsSidebar.classList.remove('open');
+    }
     
     // Start Polling
     if (pollInterval) clearInterval(pollInterval);
@@ -115,30 +142,31 @@ function renderMessages(messages, silent) {
         messagesContainer.innerHTML = '';
     }
     
-    // If silent (polling), only update if there are new messages.
-    // A simple way to check is comparing the length if we store it.
-    // For simplicity here, we'll re-render if it's not silent or if the length changed.
     const currentMsgCount = messagesContainer.querySelectorAll('.message').length;
     
     if (silent && messages.length === currentMsgCount) {
-        return; // no new messages
+        return; 
     }
     
     messagesContainer.innerHTML = '';
     
     if (messages.length === 0) {
-        messagesContainer.innerHTML = '<div class="empty-state">No hay mensajes en esta conversación.</div>';
+        messagesContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon"><i class='bx bx-message-square-dots'></i></div>
+                <p>No hay mensajes en esta conversación.</p>
+            </div>
+        `;
         return;
     }
     
     messages.forEach(msg => {
         const div = document.createElement('div');
-        div.className = `message ${msg.role}`; // 'user' or 'assistant'
+        div.className = `message ${msg.role}`; 
         
         const date = new Date(msg.createdAt);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        // Convert line breaks to <br> for proper rendering
         const content = msg.content.replace(/\n/g, '<br>');
         
         div.innerHTML = `
@@ -149,18 +177,23 @@ function renderMessages(messages, silent) {
         messagesContainer.appendChild(div);
     });
     
-    // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Navigation Tabs
 function switchTab(tab) {
+    navLinks.classList.remove('show'); // close mobile nav
+    
     if (tab === 'chats') {
         navChats.classList.add('active');
         navAgenda.classList.remove('active');
         chatsSidebar.style.display = 'flex';
         chatArea.style.display = 'flex';
         agendaArea.style.display = 'none';
+        
+        if (window.innerWidth <= 768 && !currentUserId) {
+            chatsSidebar.classList.add('open');
+        }
         
         if (currentUserId && !pollInterval) {
             pollInterval = setInterval(() => loadMessages(currentUserId, true), 5000);
@@ -188,20 +221,26 @@ function switchTab(tab) {
 // Calendar Init
 async function initCalendar() {
     if (calendar) {
-        // Just refresh events if already initialized
         calendar.refetchEvents();
         return;
     }
     
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',
+        initialView: 'dayGridMonth',
         timeZone: 'UTC',
         locale: 'es',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'dayGridMonth,timeGridWeek,listWeek' // Added listWeek for List view
+        },
+        buttonText: {
+            today:    'Hoy',
+            month:    'Mes',
+            week:     'Semana',
+            day:      'Día',
+            list:     'Lista'
         },
         slotMinTime: "09:00:00",
         slotMaxTime: "19:00:00",
@@ -218,9 +257,12 @@ async function initCalendar() {
                         id: app.id,
                         title: `${clientName} - ${app.reason}`,
                         start: app.date,
-                        // Assumes 1 hour duration
                         end: new Date(new Date(app.date).getTime() + 60 * 60 * 1000).toISOString(),
-                        description: `Motivo: ${app.reason}\nTeléfono: ${app.user.phone}\nNombre: ${app.user.name || 'N/A'}`,
+                        description: `
+                            <div style="margin-bottom: 8px;"><strong><i class='bx bx-user'></i> Cliente:</strong> ${app.user.name || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong><i class='bx bx-phone'></i> Teléfono:</strong> ${app.user.phone}</div>
+                            <div style="margin-bottom: 8px;"><strong><i class='bx bx-wrench'></i> Motivo:</strong> ${app.reason}</div>
+                        `,
                     };
                 });
                 successCallback(events);
@@ -232,7 +274,16 @@ async function initCalendar() {
         eventClick: function(info) {
             const modal = document.getElementById('appointmentModal');
             const descEl = document.getElementById('modalDescription');
-            descEl.innerHTML = info.event.extendedProps.description.replace(/\n/g, '<br>');
+            
+            // Render nice formatted description
+            descEl.innerHTML = `
+                <div style="margin-bottom: 15px; font-size: 1.1rem; color: var(--accent);">
+                    <strong><i class='bx bx-time-five'></i> Horario:</strong><br> 
+                    ${info.event.start.toLocaleString()}
+                </div>
+                <div>${info.event.extendedProps.description}</div>
+            `;
+            
             modal.style.display = 'flex';
         }
     });
