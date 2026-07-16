@@ -10,7 +10,7 @@ export class ReminderService {
   // Utilidad para obtener la hora actual en Argentina pero representada en UTC, 
   // ya que los turnos se guardaron así en la BD (ej. 14:00 AR = 14:00 UTC en BD).
   private static getArgentinaFakeUTC(): Date {
-      const parts = new Intl.DateTimeFormat('en-US', {
+      const parts = new Intl.DateTimeFormat('es-AR', {
           timeZone: TIMEZONE,
           year: 'numeric', month: '2-digit', day: '2-digit',
           hour: '2-digit', minute: '2-digit', second: '2-digit',
