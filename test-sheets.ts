@@ -18,12 +18,13 @@ async function test() {
     console.log(info);
 
     console.log("\n--- 2. Probando: Buscar en Plan Canje ---");
-    // Cambia 'iPhone' por algún modelo que sepas que está en la planilla si quieres probar otra cosa
-    const canje = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, "iPhone");
+    // Al buscar con "", traerá TODA la información de la planilla
+    const canje = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, "");
     console.log(canje);
     
     console.log("\n--- 3. Probando: Buscar en Reparaciones ---");
-    const reparacion = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, "123");
+    // Al buscar con "", traerá TODA la información de la planilla
+    const reparacion = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, "");
     console.log(reparacion);
 
     console.log("\n==========================================");
