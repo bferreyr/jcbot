@@ -101,28 +101,46 @@ export class AppointmentService {
       }
 
       // 1. Borrar cualquier turno futuro que tuviera el cliente para "liberar" el espacio.
-      // (Así logramos que la reprogramación funcione automáticamente).
+      // Pero antes guardamos el motivo original para no perderlo en la reprogramación.
       const fakeUtcNow = this.getArgentinaFakeUTC();
       
-      await prisma.appointment.deleteMany({
-        where: {
-          userId: userId,
-          date: { gte: fakeUtcNow },
-          status: "CONFIRMED"
-        }
+      const oldAppointments = await prisma.appointment.findMany({
+        where: { userId: userId, date: { gte: fakeUtcNow }, status: "CONFIRMED" },
+        orderBy: { date: "asc" }
       });
+
+      let finalReason = reason;
+      if (oldAppointments.length > 0) {
+        const oldReason = oldAppointments[0].reason;
+        
+        // Si la IA pone un motivo genérico de reprogramación, restauramos el motivo original
+        if (/cambio|reprogram|mover|turno/i.test(reason) || reason.length < 10) {
+          finalReason = oldReason;
+        } else {
+          // Si el cliente dio un motivo nuevo, guardamos ambos por las dudas
+          finalReason = `${reason} (Original: ${oldReason})`;
+        }
+
+        await prisma.appointment.deleteMany({
+          where: {
+            userId: userId,
+            date: { gte: fakeUtcNow },
+            status: "CONFIRMED"
+          }
+        });
+      }
 
       // 2. Crear el nuevo turno
       await prisma.appointment.create({
         data: {
           date: appointmentDate,
-          reason: reason,
+          reason: finalReason,
           status: "CONFIRMED",
           userId: userId,
         }
       });
 
-      return `Éxito. Turno confirmado para el ${dateStr} a las ${timeStr}. Motivo: ${reason}.`;
+      return `Éxito. Turno confirmado para el ${dateStr} a las ${timeStr}. Motivo: ${finalReason}.`;
     } catch (error) {
       console.error("Error al agendar turno:", error);
       return "Hubo un error interno al intentar agendar. Pide disculpas al usuario.";
