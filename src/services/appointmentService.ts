@@ -61,7 +61,25 @@ export class AppointmentService {
   }
 
   /**
-   * Crea un nuevo turno.
+   * Obtiene la hora actual en Argentina representada en UTC (para coincidir con la BD)
+   */
+  private static getArgentinaFakeUTC(): Date {
+      const parts = new Intl.DateTimeFormat('es-AR', {
+          timeZone: 'America/Argentina/Buenos_Aires',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hourCycle: 'h23'
+      }).formatToParts(new Date());
+  
+      const p: Record<string, number> = {};
+      for (const part of parts) {
+          if (part.type !== 'literal') p[part.type] = parseInt(part.value, 10);
+      }
+      return new Date(Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second));
+  }
+
+  /**
+   * Crea un nuevo turno (y borra los futuros anteriores del usuario).
    */
   static async bookAppointment(userId: string, dateStr: string, timeStr: string, reason: string): Promise<string> {
     try {
@@ -77,15 +95,29 @@ export class AppointmentService {
         }
       });
 
-      if (existing) {
+      // Si está ocupado por OTRA persona, rechazar.
+      if (existing && existing.userId !== userId) {
         return "Error: Ese horario acaba de ser ocupado. Por favor pídele al usuario que elija otro horario.";
       }
 
+      // 1. Borrar cualquier turno futuro que tuviera el cliente para "liberar" el espacio.
+      // (Así logramos que la reprogramación funcione automáticamente).
+      const fakeUtcNow = this.getArgentinaFakeUTC();
+      
+      await prisma.appointment.deleteMany({
+        where: {
+          userId: userId,
+          date: { gte: fakeUtcNow },
+          status: "CONFIRMED"
+        }
+      });
+
+      // 2. Crear el nuevo turno
       await prisma.appointment.create({
         data: {
           date: appointmentDate,
           reason: reason,
-          status: "CONFIRMED", // Como pidió el cliente
+          status: "CONFIRMED",
           userId: userId,
         }
       });
