@@ -83,27 +83,60 @@ export class AppointmentService {
    */
   static async bookAppointment(userId: string, dateStr: string, timeStr: string, reason: string): Promise<string> {
     try {
-      // timeStr format expected: "14:00"
       const [hour] = timeStr.split(":");
-      
       const appointmentDate = new Date(`${dateStr}T${hour.padStart(2, '0')}:00:00.000Z`);
 
-      // Chequear si ya está ocupado justo antes de reservar
       const existing = await prisma.appointment.findFirst({
-        where: {
-          date: appointmentDate
-        }
+        where: { date: appointmentDate }
       });
 
-      // Si está ocupado por OTRA persona, rechazar.
       if (existing && existing.userId !== userId) {
         return "Error: Ese horario acaba de ser ocupado. Por favor pídele al usuario que elija otro horario.";
       }
 
-      // 1. Borrar cualquier turno futuro que tuviera el cliente para "liberar" el espacio.
-      // Pero antes guardamos el motivo original para no perderlo en la reprogramación.
       const fakeUtcNow = this.getArgentinaFakeUTC();
-      
+      const oldAppointments = await prisma.appointment.findMany({
+        where: { userId: userId, date: { gte: fakeUtcNow }, status: "CONFIRMED" },
+        orderBy: { date: "asc" }
+      });
+
+      if (oldAppointments.length > 0) {
+        return "El cliente ya tiene un turno agendado en el futuro. Dile que ya agotó la cantidad de turnos por día permitidos y que lo único que puede hacer es reprogramar su turno usando la herramienta 'reschedule_appointment'.";
+      }
+
+      await prisma.appointment.create({
+        data: {
+          date: appointmentDate,
+          reason: reason,
+          status: "CONFIRMED",
+          userId: userId,
+        }
+      });
+
+      return `Éxito. Turno confirmado para el ${dateStr} a las ${timeStr}. Motivo: ${reason}.`;
+    } catch (error) {
+      console.error("Error al agendar turno:", error);
+      return "Hubo un error interno al intentar agendar. Pide disculpas al usuario.";
+    }
+  }
+
+  /**
+   * Reprograma un turno existente (borra los futuros anteriores del usuario y crea uno nuevo).
+   */
+  static async rescheduleAppointment(userId: string, dateStr: string, timeStr: string, reason: string): Promise<string> {
+    try {
+      const [hour] = timeStr.split(":");
+      const appointmentDate = new Date(`${dateStr}T${hour.padStart(2, '0')}:00:00.000Z`);
+
+      const existing = await prisma.appointment.findFirst({
+        where: { date: appointmentDate }
+      });
+
+      if (existing && existing.userId !== userId) {
+        return "Error: Ese horario acaba de ser ocupado. Por favor pídele al usuario que elija otro horario.";
+      }
+
+      const fakeUtcNow = this.getArgentinaFakeUTC();
       const oldAppointments = await prisma.appointment.findMany({
         where: { userId: userId, date: { gte: fakeUtcNow }, status: "CONFIRMED" },
         orderBy: { date: "asc" }
@@ -113,24 +146,17 @@ export class AppointmentService {
       if (oldAppointments.length > 0) {
         const oldReason = oldAppointments[0].reason;
         
-        // Si la IA pone un motivo genérico de reprogramación, restauramos el motivo original
         if (/cambio|reprogram|mover|turno/i.test(reason) || reason.length < 10) {
           finalReason = oldReason;
         } else {
-          // Si el cliente dio un motivo nuevo, guardamos ambos por las dudas
           finalReason = `${reason} (Original: ${oldReason})`;
         }
 
         await prisma.appointment.deleteMany({
-          where: {
-            userId: userId,
-            date: { gte: fakeUtcNow },
-            status: "CONFIRMED"
-          }
+          where: { userId: userId, date: { gte: fakeUtcNow }, status: "CONFIRMED" }
         });
       }
 
-      // 2. Crear el nuevo turno
       await prisma.appointment.create({
         data: {
           date: appointmentDate,
@@ -140,10 +166,10 @@ export class AppointmentService {
         }
       });
 
-      return `Éxito. Turno confirmado para el ${dateStr} a las ${timeStr}. Motivo: ${finalReason}.`;
+      return `Éxito. Turno reprogramado para el ${dateStr} a las ${timeStr}. Motivo: ${finalReason}.`;
     } catch (error) {
-      console.error("Error al agendar turno:", error);
-      return "Hubo un error interno al intentar agendar. Pide disculpas al usuario.";
+      console.error("Error al reprogramar turno:", error);
+      return "Hubo un error interno al intentar reprogramar. Pide disculpas al usuario.";
     }
   }
 }

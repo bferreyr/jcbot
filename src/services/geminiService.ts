@@ -34,7 +34,7 @@ Aquí tienes información específica del negocio (Horarios, precios, dirección
 ${businessInfo}
 
 Responde siempre basándote en esta información. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
-Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente.
+Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente. Si quiere cambiar o reprogramar su turno, usa reschedule_appointment.
 Para consultar el estado de una reparación, utiliza check_repair_status pidiendo al cliente su DNI o código de seguimiento.
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.`;
 
@@ -55,13 +55,26 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
             },
             {
               name: "book_appointment",
-              description: "Reserva un turno para el usuario.",
+              description: "Reserva un turno nuevo para el usuario. IMPORTANTE: Falla si el usuario ya tiene un turno.",
               parameters: {
                 type: SchemaType.OBJECT,
                 properties: {
                   date: { type: SchemaType.STRING, description: "Fecha en formato YYYY-MM-DD" },
                   time: { type: SchemaType.STRING, description: "Hora en formato HH:mm" },
                   reason: { type: SchemaType.STRING, description: "Motivo del turno" },
+                },
+                required: ["date", "time", "reason"],
+              },
+            },
+            {
+              name: "reschedule_appointment",
+              description: "Reprograma un turno existente del usuario a un nuevo horario.",
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  date: { type: SchemaType.STRING, description: "Nueva Fecha en formato YYYY-MM-DD" },
+                  time: { type: SchemaType.STRING, description: "Nueva Hora en formato HH:mm" },
+                  reason: { type: SchemaType.STRING, description: "Motivo (si lo cambia, si no poner Cambio de turno)" },
                 },
                 required: ["date", "time", "reason"],
               },
@@ -143,6 +156,9 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
         } else if (call.name === "book_appointment") {
           const { date, time, reason } = args;
           apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
+        } else if (call.name === "reschedule_appointment") {
+          const { date, time, reason } = args;
+          apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
         } else if (call.name === "check_repair_status") {
           const query = args.query;
           apiResponse = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, query as string);
