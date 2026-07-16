@@ -81,11 +81,11 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
             },
             {
               name: "get_repair_cost",
-              description: "Busca el costo o precio de una reparación en la base de datos usando el modelo del equipo y/o tipo de reparación.",
+              description: "Busca los costos de reparación para un modelo específico. Pasa SOLO el nombre corto del modelo.",
               parameters: {
                 type: SchemaType.OBJECT,
                 properties: {
-                  query: { type: SchemaType.STRING, description: "El modelo del equipo o reparación a buscar (ej: iPhone 13 pantalla)." },
+                  query: { type: SchemaType.STRING, description: "SOLO el modelo del equipo, sin palabras extra (ej: iPhone 13, S22 Ultra). No agregues 'pantalla' ni 'cambio'." },
                 },
                 required: ["query"],
               },
@@ -96,7 +96,7 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
               parameters: {
                 type: SchemaType.OBJECT,
                 properties: {
-                  model: { type: SchemaType.STRING, description: "El modelo del equipo (ej: iPhone 13, S23 Ultra)." },
+                  model: { type: SchemaType.STRING, description: "SOLO el modelo del equipo (ej: iPhone 13, S23 Ultra). No agregues palabras extra." },
                 },
                 required: ["model"],
               },
