@@ -32,9 +32,12 @@ model Appointment {
   id        String   @id @default(uuid())
   date      DateTime
   reason    String
-  status    String   @default("CONFIRMED")
-  createdAt DateTime @default(now())
+  status               String   @default("CONFIRMED")
+  createdAt            DateTime @default(now())
   
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  morningReminderSent  Boolean  @default(false)
+  hourlyReminderSent   Boolean  @default(false)
+  
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
 }

@@ -12,8 +12,13 @@ app.use(express.json());
 app.use("/api/webhook", webhookRoutes);
 app.use("/api", apiRoutes);
 
+import { ReminderService } from "./services/reminderService";
+
 // Servir la interfaz web estática
 app.use(express.static(path.join(__dirname, "../public")));
+
+// Iniciar cron jobs
+ReminderService.start();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
