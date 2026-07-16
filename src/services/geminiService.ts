@@ -35,7 +35,7 @@ ${businessInfo}
 
 Responde siempre basándote en esta información. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
 Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente. Si quiere cambiar o reprogramar su turno, usa reschedule_appointment.
-Para consultar el estado de una reparación, utiliza check_repair_status pidiendo al cliente su DNI o código de seguimiento.
+Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.`;
 
     try {
@@ -80,12 +80,12 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
               },
             },
             {
-              name: "check_repair_status",
-              description: "Busca el estado de una reparación en la base de datos usando el DNI, número de seguimiento o nombre del cliente.",
+              name: "get_repair_cost",
+              description: "Busca el costo o precio de una reparación en la base de datos usando el modelo del equipo y/o tipo de reparación.",
               parameters: {
                 type: SchemaType.OBJECT,
                 properties: {
-                  query: { type: SchemaType.STRING, description: "El DNI, nombre o código a buscar." },
+                  query: { type: SchemaType.STRING, description: "El modelo del equipo o reparación a buscar (ej: iPhone 13 pantalla)." },
                 },
                 required: ["query"],
               },
@@ -159,7 +159,7 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
         } else if (call.name === "reschedule_appointment") {
           const { date, time, reason } = args;
           apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
-        } else if (call.name === "check_repair_status") {
+        } else if (call.name === "get_repair_cost") {
           const query = args.query;
           apiResponse = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, query as string);
         } else if (call.name === "get_plan_canje_info") {
