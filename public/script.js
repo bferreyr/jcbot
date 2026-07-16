@@ -275,11 +275,15 @@ async function initCalendar() {
             const modal = document.getElementById('appointmentModal');
             const descEl = document.getElementById('modalDescription');
             
+            // Format the date forcing UTC so the exact hour requested is shown
+            const dateStr = info.event.start.toLocaleDateString('es-AR', { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = info.event.start.toLocaleTimeString('es-AR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+            
             // Render nice formatted description
             descEl.innerHTML = `
                 <div style="margin-bottom: 15px; font-size: 1.1rem; color: var(--accent);">
                     <strong><i class='bx bx-time-five'></i> Horario:</strong><br> 
-                    ${info.event.start.toLocaleString()}
+                    <span style="text-transform: capitalize;">${dateStr}</span> a las ${timeStr}
                 </div>
                 <div>${info.event.extendedProps.description}</div>
             `;
