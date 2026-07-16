@@ -77,7 +77,8 @@ export class GoogleSheetsService {
       }
 
       const results = [];
-      const lowerQuery = query.toLowerCase();
+      const lowerQuery = query.toLowerCase().trim();
+      const queryTerms = lowerQuery.split(/\s+/); // Separar la búsqueda en palabras
 
       // 3. Buscar en cada pestaña
       for (let v = 0; v < valueRanges.length; v++) {
@@ -91,8 +92,12 @@ export class GoogleSheetsService {
         // Buscar a partir de la fila 1 (ignorando encabezados)
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i];
-          // Revisar si alguna celda contiene la query
-          const matches = row.some(cell => cell && cell.toString().toLowerCase().includes(lowerQuery));
+          
+          // Unir toda la fila en un solo texto para buscar las palabras en cualquier columna
+          const rowText = row.join(" ").toLowerCase();
+
+          // Revisar si TODAS las palabras de la búsqueda están en alguna parte de esta fila
+          const matches = queryTerms.every(term => rowText.includes(term));
           
           if (matches) {
             // Formatear la fila encontrada con sus encabezados
