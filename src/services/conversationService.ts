@@ -3,14 +3,19 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class ConversationService {
-  static async getUser(phone: string) {
+  static async getUser(phone: string, name?: string) {
     let user = await prisma.user.findUnique({
       where: { phone },
     });
 
     if (!user) {
       user = await prisma.user.create({
-        data: { phone },
+        data: { phone, name },
+      });
+    } else if (name && user.name !== name) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { name },
       });
     }
     return user;

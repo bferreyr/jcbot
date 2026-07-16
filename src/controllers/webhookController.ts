@@ -37,6 +37,9 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
         const message = body.entry[0].changes[0].value.messages[0];
         const from = message.from;
         
+        const contacts = body.entry[0].changes[0].value.contacts;
+        const profileName = contacts && contacts[0] && contacts[0].profile ? contacts[0].profile.name : undefined;
+        
         let msgBody = "";
         if (message.type === "text") {
            msgBody = message.text.body;
@@ -45,9 +48,9 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
            return;
         }
 
-        console.log(`Received message from ${from}: ${msgBody}`);
+        console.log(`Received message from ${from} (${profileName || 'Unknown'}): ${msgBody}`);
 
-        const user = await ConversationService.getUser(from);
+        const user = await ConversationService.getUser(from, profileName);
         await ConversationService.addMessage(user.id, "user", msgBody);
 
         const history = await ConversationService.getHistory(user.id, 10);
