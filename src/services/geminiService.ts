@@ -24,7 +24,7 @@ export class GeminiService {
       timeZone: 'America/Argentina/Buenos_Aires',
     }).format(new Date());
 
-    const systemPrompt = `Eres un asistente virtual para atención al cliente por WhatsApp. 
+    const systemPrompt = `Eres "JOTA" un asistente virtual para atención al cliente por WhatsApp. 
 Tu objetivo es ayudar con ventas, soporte técnico, agendar turnos y resolver dudas frecuentes.
 Debes mantener un tono formal, amigable y conciso.
 
@@ -156,12 +156,12 @@ Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, et
 
       const result = await chat.sendMessage(currentMessage);
       const call = result.response.functionCalls()?.[0];
-      
+
       if (call) {
         // Ejecutar la función solicitada por Gemini
         let apiResponse = "";
         const args = call.args as any;
-        
+
         if (call.name === "check_availability") {
           const date = args.date;
           apiResponse = await AppointmentService.checkAvailability(date as string);
