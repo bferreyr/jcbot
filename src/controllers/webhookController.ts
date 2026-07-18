@@ -65,7 +65,26 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
 
         const reply = await GeminiService.generateResponse(user.id, mappedHistory, msgBody);
 
-        await WhatsappService.sendMessage(from, reply);
+        const imageRegex = /\[IMAGE:\s*(https?:\/\/[^\]]+)\]/g;
+        let match;
+        const imagesToSend: string[] = [];
+        let textReply = reply;
+
+        while ((match = imageRegex.exec(reply)) !== null) {
+          imagesToSend.push(match[1].trim());
+        }
+
+        textReply = textReply.replace(imageRegex, '').trim();
+
+        for (const imgUrl of imagesToSend) {
+          await WhatsappService.sendImage(from, imgUrl);
+        }
+
+        if (textReply) {
+          await WhatsappService.sendMessage(from, textReply);
+        } else if (imagesToSend.length === 0) {
+          await WhatsappService.sendMessage(from, reply); // Fallback
+        }
         await ConversationService.addMessage(user.id, "assistant", reply);
       }
       res.sendStatus(200);

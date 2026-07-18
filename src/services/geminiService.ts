@@ -36,7 +36,8 @@ ${businessInfo}
 Responde siempre basándote en esta información. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
 Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente. Si quiere cambiar o reprogramar su turno, usa reschedule_appointment.
 Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
-Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.`;
+Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.
+Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, etc.), utiliza get_accessory_stock buscando por el accesorio y modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.`;
 
     try {
       const tools: Tool[] = [
@@ -99,6 +100,17 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
                   model: { type: SchemaType.STRING, description: "SOLO el modelo del equipo (ej: iPhone 13, S23 Ultra). No agregues palabras extra." },
                 },
                 required: ["model"],
+              },
+            },
+            {
+              name: "get_accessory_stock",
+              description: "Busca stock, precios y detalles de accesorios (fundas, cargadores, etc.) para un modelo específico.",
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  query: { type: SchemaType.STRING, description: "El tipo de accesorio y modelo (ej: cargador iPhone 13, funda S23 Ultra)." },
+                },
+                required: ["query"],
               },
             },
           ],
@@ -165,6 +177,9 @@ Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando 
         } else if (call.name === "get_plan_canje_info") {
           const model = args.model;
           apiResponse = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, model as string);
+        } else if (call.name === "get_accessory_stock") {
+          const query = args.query;
+          apiResponse = await GoogleSheetsService.searchInSheet(process.env.ACCESORIOS_SPREADSHEET_ID, query as string);
         }
 
         // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
