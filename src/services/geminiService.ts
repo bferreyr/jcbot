@@ -117,14 +117,16 @@ Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_st
             },
             {
               name: "update_crm_status",
-              description: "Actualiza el estado y la intención principal del usuario en el CRM.",
+              description: "Actualiza el estado, intención, sentimiento y urgencia del usuario en el CRM.",
               parameters: {
                 type: SchemaType.OBJECT,
                 properties: {
                   status: { type: SchemaType.STRING, description: "Estado del cliente: LEAD (prospecto/interesado), CLIENTE (ya compró o agendó turno)" },
-                  intent: { type: SchemaType.STRING, description: "Intención de compra o consulta (ej: 'Cambio Pantalla iPhone', 'S22 Ultra', 'Funda')" }
+                  intent: { type: SchemaType.STRING, description: "Intención de compra o consulta (ej: 'Cambio Pantalla iPhone', 'S22 Ultra', 'Funda')" },
+                  sentiment: { type: SchemaType.STRING, description: "Sentimiento del usuario: FELIZ, NEUTRAL o FRUSTRADO" },
+                  isUrgent: { type: SchemaType.BOOLEAN, description: "Verdadero si el usuario indica que es urgente o lo necesita ya." }
                 },
-                required: ["status", "intent"],
+                required: ["status", "intent", "sentiment", "isUrgent"],
               },
             },
           ],
@@ -195,8 +197,8 @@ Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_st
           const query = args.query;
           apiResponse = await GoogleSheetsService.searchInSheet(process.env.ACCESORIOS_SPREADSHEET_ID, query as string);
         } else if (call.name === "update_crm_status") {
-          const { status, intent } = args;
-          await ConversationService.updateUserCRM(userId, status as string, intent as string);
+          const { status, intent, sentiment, isUrgent } = args;
+          await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);
           apiResponse = "CRM Actualizado con éxito.";
         }
 

@@ -97,4 +97,51 @@ router.get("/stats", async (req, res) => {
   }
 });
 
+import { WhatsappService } from "../services/whatsappService";
+import { ConversationService } from "../services/conversationService";
+
+// Send manual message from panel
+router.post("/users/:id/message", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ error: "Content is required" });
+    }
+    
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Send via WhatsApp
+    await WhatsappService.sendMessage(user.phone, content);
+    
+    // Save to DB with isHuman = true
+    await ConversationService.addMessage(user.id, "assistant", content, true);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error sending manual message:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Toggle Bot Status
+router.post("/users/:id/toggle-bot", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paused } = req.body;
+    
+    const user = await prisma.user.update({
+      where: { id },
+      data: { botPaused: paused }
+    });
+    
+    res.json({ success: true, botPaused: user.botPaused });
+  } catch (error) {
+    console.error("Error toggling bot:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;

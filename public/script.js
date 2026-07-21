@@ -77,12 +77,20 @@ function renderUsers(users) {
         
         const statusClass = (user.status || 'LEAD').toLowerCase();
         
+        let sentimentEmoji = '';
+        if (user.sentiment === 'FELIZ') sentimentEmoji = '😊';
+        else if (user.sentiment === 'FRUSTRADO') sentimentEmoji = '😠';
+        
+        const urgencyIcon = user.isUrgent ? `<i class='bx bxs-error urgency-indicator' title="Urgente"></i>` : '';
+        
         div.innerHTML = `
             <div class="avatar-placeholder">${initial}</div>
             <div class="contact-info">
                 <div class="contact-name">
                     ${user.name || 'Desconocido'}
                     <span class="status-badge ${statusClass}">${user.status || 'LEAD'}</span>
+                    <span class="sentiment-icon">${sentimentEmoji}</span>
+                    ${urgencyIcon}
                 </div>
                 <div class="contact-phone"><i class='bx bx-phone'></i> ${user.phone}</div>
                 ${user.lastIntent ? `<div class="contact-intent"><i class='bx bx-target-lock'></i> ${user.lastIntent}</div>` : ''}
@@ -116,8 +124,15 @@ function selectUser(user) {
     
     // Update Header
     chatHeader.style.display = 'flex';
+    document.getElementById('chatInputArea').style.display = 'flex';
     chatUserName.textContent = user.name || 'Desconocido';
     chatUserPhone.innerHTML = `<i class='bx bx-phone'></i> ${user.phone}`;
+    
+    // Toggle state
+    const botToggle = document.getElementById('botToggle');
+    const botStatusText = document.getElementById('botStatusText');
+    botToggle.checked = !user.botPaused;
+    botStatusText.textContent = user.botPaused ? 'Bot Pausado' : 'Bot Activo';
     
     const initial = (user.name ? user.name.charAt(0) : user.phone.charAt(0)).toUpperCase();
     document.getElementById('chatAvatar').textContent = initial;
@@ -170,7 +185,9 @@ function renderMessages(messages, silent) {
     
     messages.forEach(msg => {
         const div = document.createElement('div');
-        div.className = `message ${msg.role}`; 
+        let msgClass = msg.role;
+        if (msg.isHuman) msgClass += ' human';
+        div.className = `message ${msgClass}`; 
         
         const date = new Date(msg.createdAt);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -341,6 +358,68 @@ async function initCalendar() {
 function closeModal() {
     document.getElementById('appointmentModal').style.display = 'none';
 }
+
+// Manual Messaging & Bot Toggle
+async function toggleBotStatus() {
+    if (!currentUserId) return;
+    
+    const toggle = document.getElementById('botToggle');
+    const isPaused = !toggle.checked;
+    const statusText = document.getElementById('botStatusText');
+    
+    statusText.textContent = isPaused ? 'Pausando...' : 'Activando...';
+    
+    try {
+        const res = await fetch(`/api/users/${currentUserId}/toggle-bot`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paused: isPaused })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            statusText.textContent = data.botPaused ? 'Bot Pausado' : 'Bot Activo';
+            loadUsers(); // Refresh users list state in background
+        }
+    } catch (error) {
+        console.error('Error toggling bot:', error);
+        toggle.checked = !isPaused; // revert
+        statusText.textContent = 'Error';
+    }
+}
+
+async function sendManualMessage() {
+    if (!currentUserId) return;
+    
+    const input = document.getElementById('manualMessageInput');
+    const content = input.value.trim();
+    if (!content) return;
+    
+    input.value = '';
+    
+    try {
+        const res = await fetch(`/api/users/${currentUserId}/message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            loadMessages(currentUserId, false); // Reload messages instantly
+        }
+    } catch (error) {
+        console.error('Error sending manual message:', error);
+    }
+}
+
+// Allow Enter key to send message
+document.getElementById('manualMessageInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendManualMessage();
+    }
+});
 
 // Start
 init();

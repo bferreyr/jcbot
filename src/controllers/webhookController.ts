@@ -55,6 +55,12 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
 
         const history = await ConversationService.getHistory(user.id, 10);
         
+        if (user.botPaused) {
+          console.log(`Bot paused for ${from}. Not generating auto-reply.`);
+          res.sendStatus(200);
+          return;
+        }
+
         // Excluimos el mensaje actual porque se enviará como currentMessage
         const mappedHistory = history
           .filter(h => h.content !== msgBody)

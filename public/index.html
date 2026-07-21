@@ -73,6 +73,13 @@
                             <span id="chatUserPhone"></span>
                         </div>
                     </div>
+                    <div class="bot-toggle-container">
+                        <span id="botStatusText">Bot Activo</span>
+                        <label class="switch">
+                            <input type="checkbox" id="botToggle" onchange="toggleBotStatus()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                 </header>
                 
                 <div class="messages-container" id="messagesContainer">
@@ -81,6 +88,11 @@
                         <p>Selecciona un chat para ver los mensajes.</p>
                     </div>
                     <!-- Messages will be injected here via JS -->
+                </div>
+                
+                <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                    <textarea id="manualMessageInput" placeholder="Escribe un mensaje para enviar manualmente..." rows="1"></textarea>
+                    <button class="send-btn" onclick="sendManualMessage()"><i class='bx bxs-send'></i></button>
                 </div>
             </main>
 

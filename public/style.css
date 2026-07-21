@@ -816,3 +816,149 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Human Takeover Styles */
+.bot-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+#botStatusText {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ef4444; /* Red for Paused */
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #10b981; /* Green for Active */
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Chat Input Area */
+.chat-input-area {
+    padding: 15px 24px;
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    z-index: 2;
+}
+
+#manualMessageInput {
+    flex: 1;
+    background-color: var(--bg-base);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 15px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: none;
+    outline: none;
+    min-height: 45px;
+    max-height: 120px;
+    transition: border-color 0.2s;
+}
+
+#manualMessageInput:focus {
+    border-color: var(--accent);
+}
+
+.send-btn {
+    background: linear-gradient(135deg, var(--accent), #3b82f6);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.send-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Human Message Style */
+.message.human {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9); /* Purple to differentiate */
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+.message.human .message-time::before {
+    content: "👤 ";
+}
+
+/* Advanced CRM Indicators */
+.urgency-indicator {
+    color: #ef4444;
+    margin-left: 5px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.sentiment-icon {
+    margin-left: 5px;
+    font-size: 1.1rem;
+}

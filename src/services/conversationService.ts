@@ -21,12 +21,13 @@ export class ConversationService {
     return user;
   }
 
-  static async addMessage(userId: string, role: string, content: string) {
+  static async addMessage(userId: string, role: string, content: string, isHuman: boolean = false) {
     await prisma.message.create({
       data: {
         userId,
         role,
         content,
+        isHuman
       },
     });
   }
@@ -42,10 +43,10 @@ export class ConversationService {
     return messages.reverse();
   }
 
-  static async updateUserCRM(userId: string, status: string, lastIntent: string) {
+  static async updateUserCRM(userId: string, status: string, lastIntent: string, sentiment: string = "NEUTRAL", isUrgent: boolean = false) {
     await prisma.user.update({
       where: { id: userId },
-      data: { status, lastIntent },
+      data: { status, lastIntent, sentiment, isUrgent },
     });
   }
 }
