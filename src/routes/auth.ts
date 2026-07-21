@@ -138,4 +138,25 @@ router.delete("/users/:id", requireAuth, requireRole(["ADMIN"]), async (req, res
     }
 });
 
+// Editar personal (Solo ADMIN)
+router.put("/users/:id", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
+    try {
+        const { username, password, role } = req.body;
+        const dataToUpdate: any = {};
+        if (username) dataToUpdate.username = username;
+        if (role) dataToUpdate.role = role;
+        if (password) {
+            dataToUpdate.passwordHash = await bcrypt.hash(password, 10);
+        }
+        
+        await prisma.adminUser.update({
+            where: { id: req.params.id },
+            data: dataToUpdate
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: "Error al actualizar empleado" });
+    }
+});
+
 export default router;

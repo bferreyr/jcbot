@@ -21,15 +21,20 @@ export class ConversationService {
     return user;
   }
 
-  static async addMessage(userId: string, role: string, content: string, isHuman: boolean = false) {
-    await prisma.message.create({
-      data: {
-        userId,
-        role,
-        content,
-        isHuman
-      },
-    });
+  static async addMessage(userId: string, role: string, content: string, isHuman: boolean = false, sentByName?: string) {
+    try {
+      const message = await prisma.message.create({
+        data: {
+          userId,
+          role,
+          content,
+          isHuman,
+          sentByName
+        },
+      });
+    } catch (error) {
+      console.error("Error adding message:", error);
+    }
   }
 
   static async getHistory(userId: string, limit: number = 10) {

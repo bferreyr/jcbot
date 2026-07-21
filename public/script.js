@@ -294,8 +294,13 @@ function renderMessages(messages, silent) {
         
         const content = msg.content.replace(/\n/g, '<br>');
         
+        let sentByHTML = '';
+        if (msg.isHuman && msg.sentByName) {
+            sentByHTML = `<div style="font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-top: 5px;"><i class='bx bx-user'></i> Enviado por: ${msg.sentByName}</div>`;
+        }
+        
         div.innerHTML = `
-            <div class="message-content">${content}</div>
+            <div class="message-content">${content}${sentByHTML}</div>
             <span class="message-time">${timeStr}</span>
         `;
         
@@ -652,8 +657,11 @@ async function loadStaff() {
                 <tr>
                     <td><strong>${u.username}</strong></td>
                     <td><span class="status-badge" style="background: ${roleColor}">${u.role}</span></td>
-                    <td>
-                        <button onclick="deleteUser('${u.id}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem;" title="Eliminar Empleado">
+                    <td style="display: flex; gap: 10px;">
+                        <button onclick="openEditUserModal('${u.id}', '${u.username}', '${u.role}')" style="background:transparent; border:none; color:var(--accent); cursor:pointer; font-size:1.3rem;" title="Editar Empleado">
+                            <i class='bx bx-edit'></i>
+                        </button>
+                        <button onclick="deleteUser('${u.id}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem;" title="Eliminar Empleado">
                             <i class='bx bx-trash'></i>
                         </button>
                     </td>
@@ -662,6 +670,48 @@ async function loadStaff() {
         });
     } catch (e) {
         console.error(e);
+    }
+}
+
+function openEditUserModal(id, username, role) {
+    document.getElementById('editUserId').value = id;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editPassword').value = '';
+    document.getElementById('editRole').value = role;
+    document.getElementById('editUserModal').style.display = 'flex';
+}
+
+function closeEditUserModal() {
+    document.getElementById('editUserModal').style.display = 'none';
+}
+
+async function submitEditUser(e) {
+    e.preventDefault();
+    const id = document.getElementById('editUserId').value;
+    const username = document.getElementById('editUsername').value;
+    const password = document.getElementById('editPassword').value;
+    const role = document.getElementById('editRole').value;
+    
+    try {
+        const body = { username, role };
+        if (password) body.password = password;
+        
+        const res = await fetch(`/api/auth/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            closeEditUserModal();
+            loadStaff();
+            alert("Usuario actualizado correctamente.");
+        } else {
+            alert(data.error || "Error al actualizar");
+        }
+    } catch (err) {
+        alert("Error de conexión");
     }
 }
 

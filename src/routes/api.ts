@@ -170,11 +170,13 @@ router.post("/users/:id/message", requireRole(["ADMIN", "DIOS"]), async (req, re
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    const username = (req as any).user?.username || "Staff";
+
     // Send via WhatsApp
     await WhatsappService.sendMessage(user.phone, content);
     
-    // Save to DB with isHuman = true
-    await ConversationService.addMessage(user.id, "assistant", content, true);
+    // Save to DB with isHuman = true and sentByName
+    await ConversationService.addMessage(user.id, "assistant", content, true, username);
     
     res.json({ success: true });
   } catch (error) {
@@ -232,12 +234,14 @@ router.post("/broadcast", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
       return res.status(400).json({ error: "Message and userIds array are required" });
     }
     
+    const username = (req as any).user?.username || "Staff";
     let sentCount = 0;
+    
     for (const id of userIds) {
       const user = await prisma.user.findUnique({ where: { id } });
       if (user && user.phone) {
         await WhatsappService.sendMessage(user.phone, message);
-        await ConversationService.addMessage(user.id, "assistant", message, true); // log as human/manual
+        await ConversationService.addMessage(user.id, "assistant", message, true, username);
         sentCount++;
       }
     }

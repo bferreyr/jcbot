@@ -228,45 +228,76 @@
                     <p>Administra los accesos de los empleados al sistema.</p>
                 </header>
                 
-                <div class="metric-card glass-panel advanced" style="margin-bottom: 20px;">
-                    <div class="advanced-header">
-                        <i class='bx bx-user-plus' style="color:var(--accent); font-size:1.5rem;"></i>
-                        <h3>Crear Nuevo Usuario</h3>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: start;">
+                    <!-- Crear Empleado (Columna Izquierda) -->
+                    <div class="metric-card glass-panel advanced" style="flex-direction: column;">
+                        <div class="advanced-header">
+                            <i class='bx bx-user-plus' style="color:var(--accent); font-size:1.5rem;"></i>
+                            <h3>Nuevo Empleado</h3>
+                        </div>
+                        <form id="createUserForm" onsubmit="createUser(event)" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                            <input type="text" id="newUsername" placeholder="Usuario" required class="modern-select">
+                            <input type="password" id="newPassword" placeholder="Contraseña" required class="modern-select">
+                            <select id="newRole" class="modern-select">
+                                <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
+                                <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
+                                <option value="DIOS">DIOS (Todo excepto Personal)</option>
+                                <option value="ADMIN">ADMIN (Acceso Total)</option>
+                            </select>
+                            <button type="submit" class="broadcast-btn" style="margin: 0; width: 100%;">Registrar Empleado</button>
+                        </form>
                     </div>
-                    <form id="createUserForm" onsubmit="createUser(event)" style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <input type="text" id="newUsername" placeholder="Usuario" required class="modern-select" style="flex: 1; min-width: 200px;">
-                        <input type="password" id="newPassword" placeholder="Contraseña" required class="modern-select" style="flex: 1; min-width: 200px;">
-                        <select id="newRole" class="modern-select" style="flex: 1; min-width: 200px;">
-                            <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
-                            <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
-                            <option value="DIOS">DIOS (Todo excepto Personal)</option>
-                            <option value="ADMIN">ADMIN (Acceso Total)</option>
-                        </select>
-                        <button type="submit" class="broadcast-btn" style="margin: 0;">Crear Empleado</button>
-                    </form>
-                </div>
 
-                <div class="contacts-table-container metric-card glass-panel advanced">
-                    <div class="advanced-header">
-                        <i class='bx bx-group' style="color:var(--accent); font-size:1.5rem;"></i>
-                        <h3>Usuarios Registrados</h3>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="modern-table">
-                            <thead>
-                                <tr>
-                                    <th>Usuario</th>
-                                    <th>Rol</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="staffTableBody">
-                                <tr><td colspan="3" style="text-align:center">Cargando datos...</td></tr>
-                            </tbody>
-                        </table>
+                    <!-- Tabla (Columna Derecha) -->
+                    <div class="contacts-table-container metric-card glass-panel advanced">
+                        <div class="advanced-header">
+                            <i class='bx bx-group' style="color:var(--accent); font-size:1.5rem;"></i>
+                            <h3>Usuarios Registrados</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffTableBody">
+                                    <tr><td colspan="3" style="text-align:center">Cargando datos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </main>
+        </div>
+        
+        <!-- Modal Editar Empleado -->
+        <div class="modal-overlay" id="editUserModal" style="display: none;">
+            <div class="modal-content glass-panel" style="max-width: 400px; text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 id="modalTitle" style="margin: 0;">Editar Empleado</h2>
+                    <button onclick="closeEditUserModal()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class='bx bx-x'></i></button>
+                </div>
+                <form id="editUserForm" onsubmit="submitEditUser(event)" style="display: flex; flex-direction: column; gap: 15px;">
+                    <input type="hidden" id="editUserId">
+                    <label style="font-size: 0.85rem; color: var(--text-secondary);">Usuario</label>
+                    <input type="text" id="editUsername" required class="modern-select">
+                    
+                    <label style="font-size: 0.85rem; color: var(--text-secondary);">Nueva Contraseña (dejar en blanco para no cambiar)</label>
+                    <input type="password" id="editPassword" placeholder="******" class="modern-select">
+                    
+                    <label style="font-size: 0.85rem; color: var(--text-secondary);">Rol</label>
+                    <select id="editRole" class="modern-select">
+                        <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
+                        <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
+                        <option value="DIOS">DIOS (Todo excepto Personal)</option>
+                        <option value="ADMIN">ADMIN (Acceso Total)</option>
+                    </select>
+                    <button type="submit" class="broadcast-btn" style="margin: 10px 0 0 0;">Guardar Cambios</button>
+                </form>
+            </div>
         </div>
         
         <!-- Footer -->
