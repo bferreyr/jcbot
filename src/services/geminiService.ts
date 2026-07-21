@@ -39,7 +39,7 @@ Si el cliente desea agendar un turno, primero verifica la disponibilidad con che
 Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.
 Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, etc.), utiliza get_accessory_stock buscando por el accesorio y modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.
-Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_status cuando el usuario muestre interés claro en un servicio o producto, o cuando agende un turno (cambiando su status a CLIENTE).
+Para mantener el CRM sincronizado, usa SIEMPRE la herramienta update_crm_status cuando el usuario muestre interés en un producto/servicio, agende un turno, o cuando notes un CAMBIO en su estado de ánimo (sentiment: FELIZ, NEUTRAL, FRUSTRADO) o nivel de urgencia (isUrgent). Si el cliente estaba enojado y ahora está contento, o si ya no tiene urgencia, DEBES usar update_crm_status para reflejar su estado ACTUAL.
 Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicación, horarios, métodos de pago, garantías, etc.), DEBES usar la herramienta log_faq para registrarla.`;
 
     try {
