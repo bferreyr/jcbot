@@ -1120,3 +1120,16 @@ input:checked + .slider:before {
     font-size: 0.75rem;
     font-weight: bold;
 }
+
+.tooltip-icon {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    cursor: help;
+    margin-left: 5px;
+    vertical-align: middle;
+    transition: color 0.2s;
+}
+
+.tooltip-icon:hover {
+    color: var(--accent);
+}
