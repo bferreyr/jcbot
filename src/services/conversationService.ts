@@ -49,4 +49,13 @@ export class ConversationService {
       data: { status, lastIntent, sentiment, isUrgent },
     });
   }
+
+  static async logFAQ(category: string, question: string) {
+    await prisma.fAQLog.create({
+      data: {
+        category,
+        question
+      }
+    });
+  }
 }

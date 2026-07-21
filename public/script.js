@@ -273,8 +273,114 @@ async function loadStats() {
         document.getElementById('statAppointments').textContent = stats.totalAppointments || 0;
         document.getElementById('statConversion').textContent = stats.conversionRate || "0%";
         document.getElementById('statIntent').textContent = stats.topIntent || "N/A";
+        
+        document.getElementById('statDropoffs').textContent = stats.dropoffsCount || 0;
+        
+        const faqList = document.getElementById('faqList');
+        faqList.innerHTML = '';
+        if (stats.topFaqs && stats.topFaqs.length > 0) {
+            stats.topFaqs.forEach(faq => {
+                faqList.innerHTML += `<li><span>${faq.question}</span> <span class="ranking-badge">${faq.count}</span></li>`;
+            });
+        } else {
+            faqList.innerHTML = '<li><span style="color:var(--text-secondary)">No hay datos suficientes</span></li>';
+        }
+
+        const dropoffList = document.getElementById('dropoffList');
+        dropoffList.innerHTML = '';
+        if (stats.topDropoffIntent && stats.topDropoffIntent.length > 0) {
+            stats.topDropoffIntent.forEach(drop => {
+                dropoffList.innerHTML += `<li><span>${drop.intent}</span> <span class="ranking-badge" style="color:#ef4444">${drop.count}</span></li>`;
+            });
+        } else {
+            dropoffList.innerHTML = '<li><span style="color:var(--text-secondary)">No hay abandonos recientes</span></li>';
+        }
     } catch (error) {
         console.error('Error loading stats:', error);
+    }
+}
+
+function openAppointmentModal(appointmentJson) {
+    const appt = JSON.parse(decodeURIComponent(appointmentJson));
+    document.getElementById('modalTitle').textContent = `Turno: ${appt.service}`;
+    document.getElementById('modalDescription').innerHTML = `
+        <p><strong>Fecha y Hora:</strong> ${new Date(appt.date).toLocaleString()}</p>
+        <p><strong>Estado:</strong> ${appt.status}</p>
+    `;
+    document.getElementById('appointmentModal').style.display = 'flex';
+}
+
+function closeModal(id) {
+    if (id) {
+        document.getElementById(id).style.display = 'none';
+    } else {
+        document.getElementById('appointmentModal').style.display = 'none';
+    }
+}
+
+// Phase 3: Broadcast & Summary
+function openBroadcastModal() {
+    document.getElementById('broadcastModal').style.display = 'flex';
+    document.getElementById('broadcastMessage').value = '';
+}
+
+async function sendBroadcast() {
+    const filter = document.getElementById('broadcastFilter').value;
+    const message = document.getElementById('broadcastMessage').value.trim();
+    if (!message) {
+        alert("Por favor escribe un mensaje.");
+        return;
+    }
+    
+    let targets = [];
+    if (filter === 'ALL') targets = allUsers.map(u => u.id);
+    else targets = allUsers.filter(u => u.status === filter).map(u => u.id);
+    
+    if (targets.length === 0) {
+        alert("No hay usuarios en esta categoría.");
+        return;
+    }
+    
+    const btn = document.getElementById('broadcastBtn');
+    btn.textContent = 'Enviando...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/api/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, userIds: targets })
+        });
+        const data = await res.json();
+        alert(`Campaña enviada a ${data.sentCount} contactos.`);
+        closeModal('broadcastModal');
+        if (currentUserId && targets.includes(currentUserId)) {
+            loadMessages(currentUserId, false); // Reload chat if open
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error enviando campaña.");
+    } finally {
+        btn.textContent = 'Enviar Mensaje';
+        btn.disabled = false;
+    }
+}
+
+async function summarizeCurrentChat() {
+    if (!currentUserId) return;
+    
+    const modal = document.getElementById('summaryModal');
+    const desc = document.getElementById('summaryDescription');
+    modal.style.display = 'flex';
+    desc.innerHTML = '<i class="bx bx-loader-circle bx-spin" style="font-size:2rem; color:var(--accent);"></i><br>Generando resumen con IA...';
+    
+    try {
+        const res = await fetch(`/api/users/${currentUserId}/summary`);
+        const data = await res.json();
+        desc.innerHTML = data.summary.replace(/\n/g, '<br>');
+    } catch (e) {
+        console.error(e);
+        desc.innerHTML = 'Hubo un error al generar el resumen.';
     }
 }
 
@@ -355,10 +461,7 @@ async function initCalendar() {
     calendar.render();
 }
 
-function closeModal() {
-    document.getElementById('appointmentModal').style.display = 'none';
-}
-
+// Removed duplicate closeModal
 // Manual Messaging & Bot Toggle
 async function toggleBotStatus() {
     if (!currentUserId) return;

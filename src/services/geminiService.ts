@@ -39,7 +39,8 @@ Si el cliente desea agendar un turno, primero verifica la disponibilidad con che
 Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.
 Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, etc.), utiliza get_accessory_stock buscando por el accesorio y modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.
-Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_status cuando el usuario muestre interés claro en un servicio o producto, o cuando agende un turno (cambiando su status a CLIENTE).`;
+Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_status cuando el usuario muestre interés claro en un servicio o producto, o cuando agende un turno (cambiando su status a CLIENTE).
+Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicación, horarios, métodos de pago, garantías, etc.), DEBES usar la herramienta log_faq para registrarla.`;
 
     try {
       const tools: Tool[] = [
@@ -129,6 +130,18 @@ Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_st
                 required: ["status", "intent", "sentiment", "isUrgent"],
               },
             },
+            {
+              name: "log_faq",
+              description: "Registra una pregunta frecuente del usuario para las métricas del CRM.",
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  category: { type: SchemaType.STRING, description: "Categoría de la pregunta (ej: 'Horarios', 'Ubicación', 'Garantía', 'Pagos')" },
+                  question: { type: SchemaType.STRING, description: "La pregunta exacta o resumida que hizo el usuario." }
+                },
+                required: ["category", "question"],
+              },
+            },
           ],
         },
       ];
@@ -200,6 +213,10 @@ Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_st
           const { status, intent, sentiment, isUrgent } = args;
           await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);
           apiResponse = "CRM Actualizado con éxito.";
+        } else if (call.name === "log_faq") {
+          const { category, question } = args;
+          await ConversationService.logFAQ(category as string, question as string);
+          apiResponse = "FAQ registrada con éxito.";
         }
 
         // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
@@ -218,6 +235,34 @@ Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_st
     } catch (error) {
       console.error("Error con Gemini:", error);
       return "Lo siento, estoy teniendo problemas técnicos en este momento. Intenta de nuevo más tarde.";
+    }
+  }
+
+  static async summarizeChat(history: { role: string; content: string }[]): Promise<string> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return "Error: API key no configurada.";
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+
+    const chatText = history.map(h => `${h.role === 'user' ? 'Cliente' : 'Agente/Bot'}: ${h.content}`).join('\n');
+    
+    const prompt = `Analiza el siguiente historial de chat entre un cliente y el soporte técnico (Bot/Agente).
+Genera un resumen extremadamente conciso (máximo 3-4 líneas) que responda:
+1. ¿Cuál es el problema o necesidad principal del cliente?
+2. ¿En qué estado quedó la conversación? (Ej: agendó turno, está pendiente de respuesta, etc.)
+
+Historial:
+${chatText}
+
+Resumen Breve:`;
+
+    try {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) {
+      console.error("Error resumiendo chat:", error);
+      return "No se pudo generar el resumen del chat en este momento.";
     }
   }
 }

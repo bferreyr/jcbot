@@ -47,3 +47,10 @@ model Appointment {
   userId               String
   user                 User     @relation(fields: [userId], references: [id])
 }
+
+model FAQLog {
+  id        String   @id @default(uuid())
+  category  String
+  question  String
+  createdAt DateTime @default(now())
+}
