@@ -36,8 +36,11 @@
                 <div class="nav-item" id="navAgenda" onclick="switchTab('agenda')">
                     <i class='bx bx-calendar'></i> Agenda
                 </div>
-                <div class="nav-item" id="navMetrics" onclick="switchTab('metrics')">
+                <div class="nav-item" id="navMetrics" onclick="switchTab('metrics')" style="display: none;">
                     <i class='bx bx-bar-chart-alt-2'></i> Métricas
+                </div>
+                <div class="nav-item" id="navStaff" onclick="switchTab('staff')" style="display: none;">
+                    <i class='bx bx-group'></i> Personal
                 </div>
             </div>
             <div class="sidebar-footer" style="padding: 20px; text-align: center;">
@@ -53,6 +56,9 @@
             <aside class="sidebar" id="chatsSidebar">
                 <header class="sidebar-header">
                     <h2>Conversaciones</h2>
+                    <button class="broadcast-btn" id="btnNewCampaign" onclick="openBroadcastModal()">
+                        <i class='bx bx-broadcast'></i> Nueva Campaña
+                    </button>
                 </header>
                 <div class="search-bar">
                     <div class="search-input-wrapper">
@@ -60,9 +66,6 @@
                         <input type="text" id="searchInput" placeholder="Buscar contacto..." />
                     </div>
                 </div>
-                <button class="broadcast-btn" onclick="openBroadcastModal()">
-                    <i class='bx bx-broadcast'></i> Nueva Campaña
-                </button>
                 <div class="contacts-list" id="contactsList">
                     <!-- Contacts will be injected here via JS -->
                 </div>
@@ -85,7 +88,7 @@
                         <button class="summary-btn" onclick="summarizeCurrentChat()" title="Resumir Conversación">
                             <i class='bx bx-brain'></i>
                         </button>
-                        <div class="bot-toggle-container">
+                        <div class="bot-toggle-container" id="botToggleWrapper">
                             <span id="botStatusText">Bot Activo</span>
                             <label class="switch">
                                 <input type="checkbox" id="botToggle" onchange="toggleBotStatus()">
@@ -212,6 +215,53 @@
                             </thead>
                             <tbody id="contactsTableBody">
                                 <tr><td colspan="4" style="text-align:center">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Staff Area -->
+            <main class="staff-area" id="staffArea" style="display: none;">
+                <header class="agenda-header">
+                    <h2>Gestión de Personal</h2>
+                    <p>Administra los accesos de los empleados al sistema.</p>
+                </header>
+                
+                <div class="metric-card glass-panel advanced" style="margin-bottom: 20px;">
+                    <div class="advanced-header">
+                        <i class='bx bx-user-plus' style="color:var(--accent); font-size:1.5rem;"></i>
+                        <h3>Crear Nuevo Usuario</h3>
+                    </div>
+                    <form id="createUserForm" onsubmit="createUser(event)" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <input type="text" id="newUsername" placeholder="Usuario" required class="modern-select" style="flex: 1; min-width: 200px;">
+                        <input type="password" id="newPassword" placeholder="Contraseña" required class="modern-select" style="flex: 1; min-width: 200px;">
+                        <select id="newRole" class="modern-select" style="flex: 1; min-width: 200px;">
+                            <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
+                            <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
+                            <option value="DIOS">DIOS (Todo excepto Personal)</option>
+                            <option value="ADMIN">ADMIN (Acceso Total)</option>
+                        </select>
+                        <button type="submit" class="broadcast-btn" style="margin: 0;">Crear Empleado</button>
+                    </form>
+                </div>
+
+                <div class="contacts-table-container metric-card glass-panel advanced">
+                    <div class="advanced-header">
+                        <i class='bx bx-group' style="color:var(--accent); font-size:1.5rem;"></i>
+                        <h3>Usuarios Registrados</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody">
+                                <tr><td colspan="3" style="text-align:center">Cargando datos...</td></tr>
                             </tbody>
                         </table>
                     </div>

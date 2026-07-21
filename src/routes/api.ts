@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../middleware/auth";
 
 const router = Router();
 const prisma = new PrismaClient();
 
-// Get all users (contacts)
-router.get("/users", async (req, res) => {
+// Get all users (contacts) -> ADMIN, DIOS, EXPERTO
+router.get("/users", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       orderBy: {
@@ -24,8 +25,8 @@ router.get("/users", async (req, res) => {
   }
 });
 
-// Get messages for a specific user
-router.get("/users/:id/messages", async (req, res) => {
+// Get messages for a specific user -> ADMIN, DIOS, EXPERTO
+router.get("/users/:id/messages", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
   try {
     const { id } = req.params;
     const messages = await prisma.message.findMany({
@@ -43,7 +44,7 @@ router.get("/users/:id/messages", async (req, res) => {
   }
 });
 
-// Get all appointments
+// Get all appointments -> TODOS (JUNIOR, EXPERTO, DIOS, ADMIN)
 router.get("/appointments", async (req, res) => {
   try {
     const appointments = await prisma.appointment.findMany({
@@ -61,8 +62,8 @@ router.get("/appointments", async (req, res) => {
   }
 });
 
-// Get CRM stats
-router.get("/stats", async (req, res) => {
+// Get CRM stats -> SOLO ADMIN
+router.get("/stats", requireRole(["ADMIN"]), async (req, res) => {
   try {
     const totalUsers = await prisma.user.count();
     const totalLeads = await prisma.user.count({ where: { status: "LEAD" } });
@@ -156,8 +157,8 @@ router.get("/stats", async (req, res) => {
 import { WhatsappService } from "../services/whatsappService";
 import { ConversationService } from "../services/conversationService";
 
-// Send manual message from panel
-router.post("/users/:id/message", async (req, res) => {
+// Send manual message from panel -> ADMIN, DIOS
+router.post("/users/:id/message", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -182,8 +183,8 @@ router.post("/users/:id/message", async (req, res) => {
   }
 });
 
-// Toggle Bot Status
-router.post("/users/:id/toggle-bot", async (req, res) => {
+// Toggle Bot Status -> ADMIN, DIOS
+router.post("/users/:id/toggle-bot", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { paused } = req.body;
@@ -202,8 +203,8 @@ router.post("/users/:id/toggle-bot", async (req, res) => {
 
 import { GeminiService } from "../services/geminiService";
 
-// Summarize Chat
-router.get("/users/:id/summary", async (req, res) => {
+// Summarize Chat -> ADMIN, DIOS, EXPERTO
+router.get("/users/:id/summary", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
   try {
     const { id } = req.params;
     const history = await ConversationService.getHistory(id, 30); // get last 30 msgs
@@ -222,8 +223,8 @@ router.get("/users/:id/summary", async (req, res) => {
   }
 });
 
-// Broadcast Message
-router.post("/broadcast", async (req, res) => {
+// Broadcast Message -> ADMIN, DIOS
+router.post("/broadcast", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
   try {
     const { message, userIds } = req.body;
     

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { requireAuth, requireRole } from "../middleware/auth";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -85,6 +86,55 @@ router.post("/setup", async (req, res) => {
     } catch (error) {
         console.error("Error en setup:", error);
         res.status(500).json({ error: "Error creando administrador" });
+    }
+});
+
+// Obtener datos del usuario logueado
+router.get("/me", requireAuth, (req, res) => {
+    // @ts-ignore
+    res.json({ user: req.user });
+});
+
+// Obtener lista de personal (Solo ADMIN)
+router.get("/users", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
+    try {
+        const users = await prisma.adminUser.findMany({
+            select: { id: true, username: true, role: true, createdAt: true }
+        });
+        res.json(users);
+    } catch (e) {
+        res.status(500).json({ error: "Error al obtener personal" });
+    }
+});
+
+// Crear personal (Solo ADMIN)
+router.post("/users", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
+    try {
+        const { username, password, role } = req.body;
+        if (!username || !password || !role) {
+            return res.status(400).json({ error: "Faltan datos" });
+        }
+        
+        const count = await prisma.adminUser.count({ where: { username } });
+        if (count > 0) return res.status(400).json({ error: "El usuario ya existe" });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        const newAdmin = await prisma.adminUser.create({
+            data: { username, passwordHash, role }
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: "Error al crear empleado" });
+    }
+});
+
+// Eliminar personal (Solo ADMIN)
+router.delete("/users/:id", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
+    try {
+        await prisma.adminUser.delete({ where: { id: req.params.id } });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: "Error al eliminar empleado" });
     }
 });
 

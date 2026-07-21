@@ -2,6 +2,7 @@ let currentUserId = null;
 let pollInterval = null;
 let calendar = null;
 let allUsers = [];
+let currentUserData = null;
 
 const navChats = document.getElementById('navChats');
 const navAgenda = document.getElementById('navAgenda');
@@ -40,13 +41,62 @@ function initMobileView() {
 
 // Initialize
 async function init() {
-    await loadUsers();
+    await loadMe();
+    applyRoles();
+    
+    // Default tab logic based on role
+    if (currentUserData?.role === 'JUNIOR') {
+        switchTab('agenda');
+    }
+
+    if (currentUserData?.role !== 'JUNIOR') {
+        await loadUsers();
+    } else {
+        // If junior, just init calendar
+        initCalendar();
+    }
     
     searchInput.addEventListener('input', (e) => {
         filterUsers(e.target.value);
     });
     
     initMobileView();
+}
+
+async function loadMe() {
+    try {
+        const res = await fetch('/api/auth/me');
+        if (res.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
+        const data = await res.json();
+        currentUserData = data.user;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function applyRoles() {
+    if (!currentUserData) return;
+    const role = currentUserData.role;
+    
+    if (role === 'ADMIN') {
+        document.getElementById('navMetrics').style.display = 'flex';
+        document.getElementById('navStaff').style.display = 'flex';
+    }
+    
+    if (role === 'JUNIOR') {
+        document.getElementById('navChats').style.display = 'none';
+        document.getElementById('chatsSidebar').style.display = 'none';
+        document.getElementById('chatArea').style.display = 'none';
+    }
+    
+    if (role === 'JUNIOR' || role === 'EXPERTO') {
+        document.getElementById('btnNewCampaign').style.display = 'none';
+        document.getElementById('chatInputArea').style.display = 'none';
+        document.getElementById('botToggleWrapper').style.display = 'none';
+    }
 }
 
 // Fetch users from API
@@ -259,35 +309,39 @@ function renderMessages(messages, silent) {
 function switchTab(tab) {
     navLinks.classList.remove('show'); // close mobile nav
     
+    navChats.classList.remove('active');
+    navAgenda.classList.remove('active');
+    navMetrics.classList.remove('active');
+    if (document.getElementById('navStaff')) document.getElementById('navStaff').classList.remove('active');
+    
+    chatsSidebar.style.display = 'none';
+    chatArea.style.display = 'none';
+    agendaArea.style.display = 'none';
+    metricsArea.style.display = 'none';
+    document.getElementById('staffArea').style.display = 'none';
+    
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+    
     if (tab === 'chats') {
+        if (currentUserData?.role === 'JUNIOR') return; // Bloqueado
         navChats.classList.add('active');
-        navAgenda.classList.remove('active');
-        navMetrics.classList.remove('active');
         chatsSidebar.style.display = 'flex';
         chatArea.style.display = 'flex';
-        agendaArea.style.display = 'none';
-        metricsArea.style.display = 'none';
         
         if (window.innerWidth <= 768 && !currentUserId) {
             chatsSidebar.classList.add('open');
         }
         
-        if (currentUserId && !pollInterval) {
+        if (currentUserId) {
             pollInterval = setInterval(() => loadMessages(currentUserId, true), 5000);
         }
     } else if (tab === 'agenda') {
-        navChats.classList.remove('active');
         navAgenda.classList.add('active');
-        navMetrics.classList.remove('active');
-        chatsSidebar.style.display = 'none';
-        chatArea.style.display = 'none';
-        metricsArea.style.display = 'none';
         agendaArea.style.display = 'flex';
         
-        if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-        }
         initCalendar();
         if (calendar) {
             setTimeout(() => {
@@ -295,20 +349,15 @@ function switchTab(tab) {
             }, 50);
         }
     } else if (tab === 'metrics') {
-        navChats.classList.remove('active');
-        navAgenda.classList.remove('active');
+        if (currentUserData?.role !== 'ADMIN') return;
         navMetrics.classList.add('active');
-        chatsSidebar.style.display = 'none';
-        chatArea.style.display = 'none';
-        agendaArea.style.display = 'none';
         metricsArea.style.display = 'flex';
-        
-        if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-        }
-        
         loadStats();
+    } else if (tab === 'staff') {
+        if (currentUserData?.role !== 'ADMIN') return;
+        document.getElementById('navStaff').classList.add('active');
+        document.getElementById('staffArea').style.display = 'flex';
+        loadStaff();
     }
 }
 
@@ -589,3 +638,64 @@ document.getElementById('manualMessageInput')?.addEventListener('keypress', func
 
 // Start
 init();
+
+// Staff Management
+async function loadStaff() {
+    try {
+        const res = await fetch('/api/auth/users');
+        const users = await res.json();
+        const tbody = document.getElementById('staffTableBody');
+        tbody.innerHTML = '';
+        users.forEach(u => {
+            const roleColor = u.role === 'ADMIN' ? 'red' : u.role === 'DIOS' ? 'purple' : u.role === 'EXPERTO' ? 'blue' : 'green';
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${u.username}</strong></td>
+                    <td><span class="status-badge" style="background: ${roleColor}">${u.role}</span></td>
+                    <td>
+                        <button onclick="deleteUser('${u.id}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem;" title="Eliminar Empleado">
+                            <i class='bx bx-trash'></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function createUser(e) {
+    e.preventDefault();
+    const username = document.getElementById('newUsername').value;
+    const password = document.getElementById('newPassword').value;
+    const role = document.getElementById('newRole').value;
+    
+    try {
+        const res = await fetch('/api/auth/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, role })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('createUserForm').reset();
+            loadStaff();
+            alert("Empleado creado con éxito");
+        } else {
+            alert(data.error || "Error al crear");
+        }
+    } catch (e) {
+        alert("Error de conexión");
+    }
+}
+
+async function deleteUser(id) {
+    if (!confirm("¿Seguro que deseas eliminar este usuario?")) return;
+    try {
+        await fetch(`/api/auth/users/${id}`, { method: 'DELETE' });
+        loadStaff();
+    } catch (e) {
+        alert("Error al eliminar");
+    }
+}

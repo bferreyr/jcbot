@@ -20,6 +20,17 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     }
 };
 
+export const requireRole = (roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        // @ts-ignore
+        const userRole = req.user?.role;
+        if (!userRole || !roles.includes(userRole)) {
+            return res.status(403).json({ error: "Acceso denegado. Permisos insuficientes." });
+        }
+        next();
+    };
+};
+
 // Middleware para proteger archivos estáticos (redirección a login.html)
 export const requireAuthHtml = (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.token;
