@@ -228,46 +228,42 @@
                     <p>Administra los accesos de los empleados al sistema.</p>
                 </header>
                 
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: start;">
-                    <!-- Crear Empleado (Columna Izquierda) -->
-                    <div class="metric-card glass-panel advanced" style="flex-direction: column;">
-                        <div class="advanced-header">
-                            <i class='bx bx-user-plus' style="color:var(--accent); font-size:1.5rem;"></i>
-                            <h3>Nuevo Empleado</h3>
-                        </div>
-                        <form id="createUserForm" onsubmit="createUser(event)" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
-                            <input type="text" id="newUsername" placeholder="Usuario" required class="modern-select">
-                            <input type="password" id="newPassword" placeholder="Contraseña" required class="modern-select">
-                            <select id="newRole" class="modern-select">
-                                <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
-                                <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
-                                <option value="DIOS">DIOS (Todo excepto Personal)</option>
-                                <option value="ADMIN">ADMIN (Acceso Total)</option>
-                            </select>
-                            <button type="submit" class="broadcast-btn" style="margin: 0; width: 100%;">Registrar Empleado</button>
-                        </form>
+                <div class="metric-card glass-panel advanced" style="margin-bottom: 20px;">
+                    <div class="advanced-header">
+                        <i class='bx bx-user-plus' style="color:var(--accent); font-size:1.5rem;"></i>
+                        <h3>Nuevo Empleado</h3>
                     </div>
+                    <form id="createUserForm" onsubmit="createUser(event)" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="newUsername" placeholder="Usuario" required class="modern-select" style="flex: 1; min-width: 200px;">
+                        <input type="password" id="newPassword" placeholder="Contraseña" required class="modern-select" style="flex: 1; min-width: 200px;">
+                        <select id="newRole" class="modern-select" style="flex: 1; min-width: 200px;">
+                            <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
+                            <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
+                            <option value="DIOS">DIOS (Todo excepto Personal)</option>
+                            <option value="ADMIN">ADMIN (Acceso Total)</option>
+                        </select>
+                        <button type="submit" class="broadcast-btn" style="margin: 0; min-width: 150px;">Registrar Empleado</button>
+                    </form>
+                </div>
 
-                    <!-- Tabla (Columna Derecha) -->
-                    <div class="contacts-table-container metric-card glass-panel advanced">
-                        <div class="advanced-header">
-                            <i class='bx bx-group' style="color:var(--accent); font-size:1.5rem;"></i>
-                            <h3>Usuarios Registrados</h3>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="modern-table">
-                                <thead>
-                                    <tr>
-                                        <th>Usuario</th>
-                                        <th>Rol</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="staffTableBody">
-                                    <tr><td colspan="3" style="text-align:center">Cargando datos...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="contacts-table-container metric-card glass-panel advanced">
+                    <div class="advanced-header">
+                        <i class='bx bx-group' style="color:var(--accent); font-size:1.5rem;"></i>
+                        <h3>Usuarios Registrados</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody">
+                                <tr><td colspan="3" style="text-align:center">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </main>
