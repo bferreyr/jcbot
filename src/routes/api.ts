@@ -11,6 +11,11 @@ router.get("/users", async (req, res) => {
       orderBy: {
         updatedAt: "desc",
       },
+      include: {
+        _count: {
+          select: { messages: true, appointments: true }
+        }
+      }
     });
     res.json(users);
   } catch (error) {

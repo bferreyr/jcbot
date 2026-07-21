@@ -56,9 +56,44 @@ async function loadUsers() {
         const users = await response.json();
         allUsers = users;
         renderUsers(users);
+        renderContactsTable(users);
     } catch (error) {
         console.error('Error loading users:', error);
     }
+}
+
+function renderContactsTable(users) {
+    const tbody = document.getElementById('contactsTableBody');
+    if (!tbody) return; // Si no estamos en la vista de métricas o no cargó
+    
+    tbody.innerHTML = '';
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">No hay contactos registrados.</td></tr>';
+        return;
+    }
+    
+    users.forEach(user => {
+        const tr = document.createElement('tr');
+        const statusClass = (user.status || 'LEAD').toLowerCase();
+        
+        const messageCount = user._count?.messages || 0;
+        const appointmentCount = user._count?.appointments || 0;
+        const displayName = user.name || user.phone;
+        
+        tr.innerHTML = `
+            <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <i class='bx bx-user' style="color:var(--text-secondary)"></i>
+                    ${displayName}
+                </div>
+            </td>
+            <td><span class="status-badge ${statusClass}">${user.status || 'LEAD'}</span></td>
+            <td>${messageCount} <i class='bx bx-message-rounded-dots' style="color:var(--text-secondary)"></i></td>
+            <td>${appointmentCount} <i class='bx bx-calendar' style="color:var(--text-secondary)"></i></td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function renderUsers(users) {
