@@ -56,4 +56,45 @@ router.get("/appointments", async (req, res) => {
   }
 });
 
+// Get CRM stats
+router.get("/stats", async (req, res) => {
+  try {
+    const totalUsers = await prisma.user.count();
+    const totalLeads = await prisma.user.count({ where: { status: "LEAD" } });
+    const totalClients = await prisma.user.count({ where: { status: "CLIENTE" } });
+    const totalAppointments = await prisma.appointment.count();
+    
+    // Most common intent (basic implementation)
+    const intents = await prisma.user.groupBy({
+      by: ['lastIntent'],
+      _count: {
+        lastIntent: true,
+      },
+      where: {
+        lastIntent: { not: null },
+      },
+      orderBy: {
+        _count: {
+          lastIntent: 'desc',
+        },
+      },
+      take: 1,
+    });
+    
+    const topIntent = intents.length > 0 ? intents[0].lastIntent : "N/A";
+
+    res.json({
+      totalUsers,
+      totalLeads,
+      totalClients,
+      totalAppointments,
+      conversionRate: totalUsers > 0 ? ((totalClients / totalUsers) * 100).toFixed(1) + "%" : "0%",
+      topIntent
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;

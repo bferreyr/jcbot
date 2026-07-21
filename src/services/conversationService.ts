@@ -41,4 +41,11 @@ export class ConversationService {
     // Devolver en orden cronológico (ascendente)
     return messages.reverse();
   }
+
+  static async updateUserCRM(userId: string, status: string, lastIntent: string) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { status, lastIntent },
+    });
+  }
 }

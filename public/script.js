@@ -4,9 +4,11 @@ let calendar = null;
 
 const navChats = document.getElementById('navChats');
 const navAgenda = document.getElementById('navAgenda');
+const navMetrics = document.getElementById('navMetrics');
 const chatsSidebar = document.getElementById('chatsSidebar');
 const chatArea = document.getElementById('chatArea');
 const agendaArea = document.getElementById('agendaArea');
+const metricsArea = document.getElementById('metricsArea');
 
 const contactsList = document.getElementById('contactsList');
 const messagesContainer = document.getElementById('messagesContainer');
@@ -73,11 +75,17 @@ function renderUsers(users) {
         
         const initial = (user.name ? user.name.charAt(0) : user.phone.charAt(0)).toUpperCase();
         
+        const statusClass = (user.status || 'LEAD').toLowerCase();
+        
         div.innerHTML = `
             <div class="avatar-placeholder">${initial}</div>
             <div class="contact-info">
-                <div class="contact-name">${user.name || 'Desconocido'}</div>
+                <div class="contact-name">
+                    ${user.name || 'Desconocido'}
+                    <span class="status-badge ${statusClass}">${user.status || 'LEAD'}</span>
+                </div>
                 <div class="contact-phone"><i class='bx bx-phone'></i> ${user.phone}</div>
+                ${user.lastIntent ? `<div class="contact-intent"><i class='bx bx-target-lock'></i> ${user.lastIntent}</div>` : ''}
             </div>
         `;
         
@@ -187,9 +195,11 @@ function switchTab(tab) {
     if (tab === 'chats') {
         navChats.classList.add('active');
         navAgenda.classList.remove('active');
+        navMetrics.classList.remove('active');
         chatsSidebar.style.display = 'flex';
         chatArea.style.display = 'flex';
         agendaArea.style.display = 'none';
+        metricsArea.style.display = 'none';
         
         if (window.innerWidth <= 768 && !currentUserId) {
             chatsSidebar.classList.add('open');
@@ -201,8 +211,10 @@ function switchTab(tab) {
     } else if (tab === 'agenda') {
         navChats.classList.remove('active');
         navAgenda.classList.add('active');
+        navMetrics.classList.remove('active');
         chatsSidebar.style.display = 'none';
         chatArea.style.display = 'none';
+        metricsArea.style.display = 'none';
         agendaArea.style.display = 'flex';
         
         if (pollInterval) {
@@ -215,6 +227,37 @@ function switchTab(tab) {
                 calendar.render();
             }, 50);
         }
+    } else if (tab === 'metrics') {
+        navChats.classList.remove('active');
+        navAgenda.classList.remove('active');
+        navMetrics.classList.add('active');
+        chatsSidebar.style.display = 'none';
+        chatArea.style.display = 'none';
+        agendaArea.style.display = 'none';
+        metricsArea.style.display = 'flex';
+        
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        
+        loadStats();
+    }
+}
+
+async function loadStats() {
+    try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        
+        document.getElementById('statUsers').textContent = stats.totalUsers || 0;
+        document.getElementById('statLeads').textContent = stats.totalLeads || 0;
+        document.getElementById('statClients').textContent = stats.totalClients || 0;
+        document.getElementById('statAppointments').textContent = stats.totalAppointments || 0;
+        document.getElementById('statConversion').textContent = stats.conversionRate || "0%";
+        document.getElementById('statIntent').textContent = stats.topIntent || "N/A";
+    } catch (error) {
+        console.error('Error loading stats:', error);
     }
 }
 

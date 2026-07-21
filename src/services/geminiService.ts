@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, SchemaType, Tool } from "@google/generative-ai";
 import { GoogleSheetsService } from "./googleSheetsService";
 import { AppointmentService } from "./appointmentService";
+import { ConversationService } from "./conversationService";
 
 export class GeminiService {
   static async generateResponse(
@@ -37,7 +38,8 @@ Responde siempre basándote en esta información. Si te preguntan algo que no es
 Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente. Si quiere cambiar o reprogramar su turno, usa reschedule_appointment.
 Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.
-Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, etc.), utiliza get_accessory_stock buscando por el accesorio y modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.`;
+Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, etc.), utiliza get_accessory_stock buscando por el accesorio y modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.
+Para registrar el interés del cliente, usa SIEMPRE la herramienta update_crm_status cuando el usuario muestre interés claro en un servicio o producto, o cuando agende un turno (cambiando su status a CLIENTE).`;
 
     try {
       const tools: Tool[] = [
@@ -113,6 +115,18 @@ Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, et
                 required: ["query"],
               },
             },
+            {
+              name: "update_crm_status",
+              description: "Actualiza el estado y la intención principal del usuario en el CRM.",
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  status: { type: SchemaType.STRING, description: "Estado del cliente: LEAD (prospecto/interesado), CLIENTE (ya compró o agendó turno)" },
+                  intent: { type: SchemaType.STRING, description: "Intención de compra o consulta (ej: 'Cambio Pantalla iPhone', 'S22 Ultra', 'Funda')" }
+                },
+                required: ["status", "intent"],
+              },
+            },
           ],
         },
       ];
@@ -180,6 +194,10 @@ Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, et
         } else if (call.name === "get_accessory_stock") {
           const query = args.query;
           apiResponse = await GoogleSheetsService.searchInSheet(process.env.ACCESORIOS_SPREADSHEET_ID, query as string);
+        } else if (call.name === "update_crm_status") {
+          const { status, intent } = args;
+          await ConversationService.updateUserCRM(userId, status as string, intent as string);
+          apiResponse = "CRM Actualizado con éxito.";
         }
 
         // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
