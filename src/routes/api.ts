@@ -126,6 +126,10 @@ router.get("/stats", async (req, res) => {
       .map(entry => ({ intent: entry[0], count: entry[1] }))
       .slice(0, 3);
 
+    const dropoffUsersList = dropoffUsers
+      .filter(u => u.messages.length > 0 && u.messages[0].role === 'assistant' && u.messages[0].createdAt < dropoffDate)
+      .map(u => ({ id: u.id, name: u.name, phone: u.phone }));
+
     res.json({
       totalUsers,
       totalLeads,
@@ -135,7 +139,8 @@ router.get("/stats", async (req, res) => {
       topIntent,
       topFaqs: faqs.map(f => ({ question: f.question, count: f._count.question })),
       dropoffsCount,
-      topDropoffIntent
+      topDropoffIntent,
+      dropoffUsersList
     });
   } catch (error) {
     console.error("Error fetching stats:", error);

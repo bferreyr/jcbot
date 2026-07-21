@@ -1,6 +1,7 @@
 let currentUserId = null;
 let pollInterval = null;
 let calendar = null;
+let allUsers = [];
 
 const navChats = document.getElementById('navChats');
 const navAgenda = document.getElementById('navAgenda');
@@ -53,6 +54,7 @@ async function loadUsers() {
     try {
         const response = await fetch('/api/users');
         const users = await response.json();
+        allUsers = users;
         renderUsers(users);
     } catch (error) {
         console.error('Error loading users:', error);
@@ -288,15 +290,28 @@ async function loadStats() {
 
         const dropoffList = document.getElementById('dropoffList');
         dropoffList.innerHTML = '';
-        if (stats.topDropoffIntent && stats.topDropoffIntent.length > 0) {
-            stats.topDropoffIntent.forEach(drop => {
-                dropoffList.innerHTML += `<li><span>${drop.intent}</span> <span class="ranking-badge" style="color:#ef4444">${drop.count}</span></li>`;
+        if (stats.dropoffUsersList && stats.dropoffUsersList.length > 0) {
+            stats.dropoffUsersList.forEach(u => {
+                const displayName = u.name || u.phone;
+                dropoffList.innerHTML += `
+                <li style="cursor:pointer;" onclick="selectUserById('${u.id}')" title="Ir al chat">
+                    <span><i class='bx bx-user'></i> ${displayName}</span>
+                    <i class='bx bx-chevron-right' style="color:var(--accent)"></i>
+                </li>`;
             });
         } else {
             dropoffList.innerHTML = '<li><span style="color:var(--text-secondary)">No hay abandonos recientes</span></li>';
         }
     } catch (error) {
         console.error('Error loading stats:', error);
+    }
+}
+
+function selectUserById(id) {
+    const user = allUsers.find(u => u.id === id);
+    if (user) {
+        switchTab('chats');
+        selectUser(user);
     }
 }
 
