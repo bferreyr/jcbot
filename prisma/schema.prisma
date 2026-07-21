@@ -54,3 +54,11 @@ model FAQLog {
   question  String
   createdAt DateTime @default(now())
 }
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}

@@ -53,12 +53,25 @@ async function init() {
 async function loadUsers() {
     try {
         const response = await fetch('/api/users');
+        if (response.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
         const users = await response.json();
         allUsers = users;
         renderUsers(users);
         renderContactsTable(users);
     } catch (error) {
         console.error('Error loading users:', error);
+    }
+}
+
+async function logout() {
+    try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login.html';
+    } catch (e) {
+        console.error("Error logging out", e);
     }
 }
 
