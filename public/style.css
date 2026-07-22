@@ -500,7 +500,12 @@ body {
     background-color: var(--bg-surface-hover) !important;
 }
 .fc-theme-standard .fc-list-day-cushion {
-    background-color: rgba(0,0,0,0.2) !important;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15)) !important;
+    color: var(--accent) !important;
+    font-weight: 600 !important;
+}
+.fc-theme-standard .fc-list-day-cushion a {
+    color: var(--accent) !important;
 }
 
 /* Modal */
