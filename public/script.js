@@ -658,6 +658,7 @@ async function loadStaff() {
         users.forEach(u => {
             const roleColor = u.role === 'ADMIN' ? '#ef4444' : u.role === 'DIOS' ? '#a855f7' : u.role === 'EXPERTO' ? '#3b82f6' : '#22c55e';
             const roleBg = u.role === 'ADMIN' ? 'rgba(239, 68, 68, 0.1)' : u.role === 'DIOS' ? 'rgba(168, 85, 247, 0.1)' : u.role === 'EXPERTO' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)';
+            const roleDesc = u.role === 'ADMIN' ? 'Acceso Total a todo el sistema.' : u.role === 'DIOS' ? 'Todo excepto Gestión de Personal.' : u.role === 'EXPERTO' ? 'Agenda y Ver Chats.' : 'Solo Gestión de Agenda.';
             const displayName = u.name || 'Sin Nombre';
             const initial = displayName.charAt(0).toUpperCase();
             
@@ -670,10 +671,10 @@ async function loadStaff() {
             }
 
             grid.innerHTML += `
-                <div class="metric-card glass-panel" style="padding: 20px; align-items: flex-start; flex-direction: column; gap: 15px; position: relative;">
+                <div class="glass-panel" style="flex: 1 1 250px; max-width: 400px; padding: 20px; display: flex; flex-direction: column; gap: 15px; position: relative;">
                     <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
                         <div class="avatar-placeholder" style="margin: 0;">${initial}</div>
-                        <span class="status-badge" style="background: ${roleBg}; color: ${roleColor}; margin: 0;">${u.role}</span>
+                        <span class="status-badge" style="background: ${roleBg}; color: ${roleColor}; margin: 0; cursor: help;" title="${roleDesc}">${u.role}</span>
                     </div>
                     <div>
                         <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 5px;">${displayName}</h3>
