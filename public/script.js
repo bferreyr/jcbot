@@ -526,10 +526,19 @@ async function initCalendar() {
         initialView: 'dayGridMonth',
         timeZone: 'UTC',
         locale: 'es',
+        customButtons: {
+            btnToday: {
+                text: 'Hoy',
+                click: function() {
+                    calendar.today();
+                    calendar.changeView('timeGridDay');
+                }
+            }
+        },
         headerToolbar: {
-            left: 'prev,next today',
+            left: 'prev,next btnToday',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek' // Added listWeek for List view
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         buttonText: {
             today:    'Hoy',

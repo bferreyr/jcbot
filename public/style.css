@@ -496,6 +496,12 @@ body {
 .fc-day-today {
     background-color: rgba(6, 182, 212, 0.05) !important;
 }
+.fc-theme-standard .fc-list-event:hover td {
+    background-color: var(--bg-surface-hover) !important;
+}
+.fc-theme-standard .fc-list-day-cushion {
+    background-color: rgba(0,0,0,0.2) !important;
+}
 
 /* Modal */
 .modal-overlay {
