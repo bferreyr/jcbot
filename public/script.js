@@ -44,10 +44,18 @@ async function init() {
     await loadMe();
     applyRoles();
     
+    let savedTab = localStorage.getItem('activeTab') || 'chats';
+    
     // Default tab logic based on role
     if (currentUserData?.role === 'JUNIOR') {
-        switchTab('agenda');
+        savedTab = 'agenda';
+    } else if (savedTab === 'metrics' && currentUserData?.role !== 'ADMIN') {
+        savedTab = 'chats';
+    } else if (savedTab === 'staff' && currentUserData?.role !== 'ADMIN') {
+        savedTab = 'chats';
     }
+
+    switchTab(savedTab);
 
     if (currentUserData?.role !== 'JUNIOR') {
         await loadUsers();
@@ -332,6 +340,7 @@ function switchTab(tab) {
     
     if (tab === 'chats') {
         if (currentUserData?.role === 'JUNIOR') return; // Bloqueado
+        localStorage.setItem('activeTab', 'chats');
         navChats.classList.add('active');
         chatsSidebar.style.display = 'flex';
         chatArea.style.display = 'flex';
@@ -344,6 +353,7 @@ function switchTab(tab) {
             pollInterval = setInterval(() => loadMessages(currentUserId, true), 5000);
         }
     } else if (tab === 'agenda') {
+        localStorage.setItem('activeTab', 'agenda');
         navAgenda.classList.add('active');
         agendaArea.style.display = 'flex';
         
@@ -355,13 +365,16 @@ function switchTab(tab) {
         }
     } else if (tab === 'metrics') {
         if (currentUserData?.role !== 'ADMIN') return;
+        localStorage.setItem('activeTab', 'metrics');
         navMetrics.classList.add('active');
         metricsArea.style.display = 'flex';
         loadStats();
     } else if (tab === 'staff') {
         if (currentUserData?.role !== 'ADMIN') return;
+        localStorage.setItem('activeTab', 'staff');
         document.getElementById('navStaff').classList.add('active');
         document.getElementById('staffArea').style.display = 'flex';
+        document.getElementById('createUserForm').reset();
         loadStaff();
     }
 }

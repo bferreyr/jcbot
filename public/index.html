@@ -228,16 +228,16 @@
                     <p>Administra los accesos de los empleados al sistema.</p>
                 </header>
                 
-                <div class="glass-panel advanced" style="margin-bottom: 20px;">
+                <div class="glass-panel advanced" style="flex: none; margin-bottom: 20px;">
                     <div class="advanced-header">
                         <i class='bx bx-user-plus' style="color:var(--accent); font-size:1.5rem;"></i>
                         <h3>Nuevo Empleado</h3>
                     </div>
-                    <form id="createUserForm" onsubmit="createUser(event)" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-                        <input type="text" id="newUsername" placeholder="Usuario" required class="modern-select" style="flex: 1; min-width: 150px;">
-                        <input type="text" id="newFirstName" placeholder="Nombre" required class="modern-select" style="flex: 1; min-width: 150px;">
-                        <input type="text" id="newLastName" placeholder="Apellido" required class="modern-select" style="flex: 1; min-width: 150px;">
-                        <input type="password" id="newPassword" placeholder="Contraseña" required class="modern-select" style="flex: 1; min-width: 150px;">
+                    <form id="createUserForm" autocomplete="off" onsubmit="createUser(event)" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="newUsername" placeholder="Usuario" required autocomplete="off" class="modern-select" style="flex: 1; min-width: 150px;">
+                        <input type="text" id="newFirstName" placeholder="Nombre" required autocomplete="off" class="modern-select" style="flex: 1; min-width: 150px;">
+                        <input type="text" id="newLastName" placeholder="Apellido" required autocomplete="off" class="modern-select" style="flex: 1; min-width: 150px;">
+                        <input type="password" id="newPassword" placeholder="Contraseña" required autocomplete="new-password" class="modern-select" style="flex: 1; min-width: 150px;">
                         <select id="newRole" class="modern-select" style="flex: 1; min-width: 150px;">
                             <option value="JUNIOR">JUNIOR (Solo Agenda)</option>
                             <option value="EXPERTO">EXPERTO (Agenda y Leer Chats)</option>
