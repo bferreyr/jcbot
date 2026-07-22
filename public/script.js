@@ -649,23 +649,45 @@ async function loadStaff() {
     try {
         const res = await fetch('/api/auth/users');
         const users = await res.json();
-        const tbody = document.getElementById('staffTableBody');
-        tbody.innerHTML = '';
+        const grid = document.getElementById('staffGrid');
+        grid.innerHTML = '';
+        if (users.length === 0) {
+            grid.innerHTML = '<div style="color:var(--text-secondary); grid-column: 1 / -1;">No hay usuarios registrados.</div>';
+            return;
+        }
         users.forEach(u => {
-            const roleColor = u.role === 'ADMIN' ? 'red' : u.role === 'DIOS' ? 'purple' : u.role === 'EXPERTO' ? 'blue' : 'green';
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${u.username}</strong></td>
-                    <td><span class="status-badge" style="background: ${roleColor}">${u.role}</span></td>
-                    <td style="display: flex; gap: 10px;">
-                        <button onclick="openEditUserModal('${u.id}', '${u.username}', '${u.role}')" style="background:transparent; border:none; color:var(--accent); cursor:pointer; font-size:1.3rem;" title="Editar Empleado">
-                            <i class='bx bx-edit'></i>
+            const roleColor = u.role === 'ADMIN' ? '#ef4444' : u.role === 'DIOS' ? '#a855f7' : u.role === 'EXPERTO' ? '#3b82f6' : '#22c55e';
+            const roleBg = u.role === 'ADMIN' ? 'rgba(239, 68, 68, 0.1)' : u.role === 'DIOS' ? 'rgba(168, 85, 247, 0.1)' : u.role === 'EXPERTO' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)';
+            const displayName = u.name || 'Sin Nombre';
+            const initial = displayName.charAt(0).toUpperCase();
+            
+            let firstName = '';
+            let lastName = '';
+            if (u.name) {
+                const parts = u.name.split(' ');
+                firstName = parts[0];
+                lastName = parts.slice(1).join(' ');
+            }
+
+            grid.innerHTML += `
+                <div class="metric-card glass-panel" style="padding: 20px; align-items: flex-start; flex-direction: column; gap: 15px; position: relative;">
+                    <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+                        <div class="avatar-placeholder" style="margin: 0;">${initial}</div>
+                        <span class="status-badge" style="background: ${roleBg}; color: ${roleColor}; margin: 0;">${u.role}</span>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 5px;">${displayName}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;"><i class='bx bx-user'></i> @${u.username}</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; width: 100%; margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <button onclick="openEditUserModal('${u.id}', '${u.username}', '${u.role}', '${firstName}', '${lastName}')" class="btn-primary" style="flex: 1; padding: 8px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <i class='bx bx-edit'></i> Editar
                         </button>
-                        <button onclick="deleteUser('${u.id}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem;" title="Eliminar Empleado">
-                            <i class='bx bx-trash'></i>
+                        <button onclick="deleteUser('${u.id}')" class="btn-primary" style="flex: 1; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #ef4444, #b91c1c); display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <i class='bx bx-trash'></i> Eliminar
                         </button>
-                    </td>
-                </tr>
+                    </div>
+                </div>
             `;
         });
     } catch (e) {
@@ -673,9 +695,11 @@ async function loadStaff() {
     }
 }
 
-function openEditUserModal(id, username, role) {
+function openEditUserModal(id, username, role, firstName = '', lastName = '') {
     document.getElementById('editUserId').value = id;
     document.getElementById('editUsername').value = username;
+    document.getElementById('editFirstName').value = firstName;
+    document.getElementById('editLastName').value = lastName;
     document.getElementById('editPassword').value = '';
     document.getElementById('editRole').value = role;
     document.getElementById('editUserModal').style.display = 'flex';
@@ -689,11 +713,14 @@ async function submitEditUser(e) {
     e.preventDefault();
     const id = document.getElementById('editUserId').value;
     const username = document.getElementById('editUsername').value;
+    const firstName = document.getElementById('editFirstName').value.trim();
+    const lastName = document.getElementById('editLastName').value.trim();
+    const name = `${firstName} ${lastName}`.trim();
     const password = document.getElementById('editPassword').value;
     const role = document.getElementById('editRole').value;
     
     try {
-        const body = { username, role };
+        const body = { username, role, name };
         if (password) body.password = password;
         
         const res = await fetch(`/api/auth/users/${id}`, {
@@ -718,6 +745,9 @@ async function submitEditUser(e) {
 async function createUser(e) {
     e.preventDefault();
     const username = document.getElementById('newUsername').value;
+    const firstName = document.getElementById('newFirstName').value.trim();
+    const lastName = document.getElementById('newLastName').value.trim();
+    const name = `${firstName} ${lastName}`.trim();
     const password = document.getElementById('newPassword').value;
     const role = document.getElementById('newRole').value;
     
@@ -725,7 +755,7 @@ async function createUser(e) {
         const res = await fetch('/api/auth/users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, role })
+            body: JSON.stringify({ username, name, password, role })
         });
         const data = await res.json();
         if (data.success) {

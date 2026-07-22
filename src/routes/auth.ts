@@ -99,7 +99,7 @@ router.get("/me", requireAuth, (req, res) => {
 router.get("/users", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
     try {
         const users = await prisma.adminUser.findMany({
-            select: { id: true, username: true, role: true, createdAt: true }
+            select: { id: true, username: true, name: true, role: true, createdAt: true }
         });
         res.json(users);
     } catch (e) {
@@ -110,7 +110,7 @@ router.get("/users", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
 // Crear personal (Solo ADMIN)
 router.post("/users", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
     try {
-        const { username, password, role } = req.body;
+        const { username, name, password, role } = req.body;
         if (!username || !password || !role) {
             return res.status(400).json({ error: "Faltan datos" });
         }
@@ -120,7 +120,7 @@ router.post("/users", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 10);
         const newAdmin = await prisma.adminUser.create({
-            data: { username, passwordHash, role }
+            data: { username, name, passwordHash, role }
         });
         res.json({ success: true });
     } catch (e) {
@@ -141,9 +141,10 @@ router.delete("/users/:id", requireAuth, requireRole(["ADMIN"]), async (req, res
 // Editar personal (Solo ADMIN)
 router.put("/users/:id", requireAuth, requireRole(["ADMIN"]), async (req, res) => {
     try {
-        const { username, password, role } = req.body;
+        const { username, name, password, role } = req.body;
         const dataToUpdate: any = {};
         if (username) dataToUpdate.username = username;
+        if (name !== undefined) dataToUpdate.name = name;
         if (role) dataToUpdate.role = role;
         if (password) {
             dataToUpdate.passwordHash = await bcrypt.hash(password, 10);

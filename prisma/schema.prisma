@@ -59,6 +59,7 @@ model FAQLog {
 model AdminUser {
   id           String   @id @default(uuid())
   username     String   @unique
+  name         String?
   passwordHash String
   role         String   @default("ADMIN")
   createdAt    DateTime @default(now())

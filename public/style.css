@@ -713,7 +713,7 @@ body {
 }
 
 /* CRM Metrics Area */
-.metrics-area {
+.metrics-area, .staff-area {
     flex: 1;
     background-color: var(--bg-base);
     padding: 30px;
