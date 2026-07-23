@@ -43,6 +43,24 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
         let msgBody = "";
         if (message.type === "text") {
            msgBody = message.text.body;
+        } else if (message.type === "audio") {
+           const mediaId = message.audio.id;
+           const mediaData = await WhatsappService.downloadMedia(mediaId);
+           if (mediaData) {
+              const transcribedText = await GeminiService.transcribeAudio(mediaData.buffer, mediaData.mimeType);
+              if (transcribedText) {
+                 msgBody = transcribedText;
+                 console.log(`Transcribed audio from ${from}: ${msgBody}`);
+              } else {
+                 await WhatsappService.sendMessage(from, "Lo siento, no pude entender el audio. ¿Podrías escribirlo?");
+                 res.sendStatus(200);
+                 return;
+              }
+           } else {
+              await WhatsappService.sendMessage(from, "Hubo un error al descargar tu audio. Por favor intenta de nuevo.");
+              res.sendStatus(200);
+              return;
+           }
         } else {
            res.sendStatus(200);
            return;

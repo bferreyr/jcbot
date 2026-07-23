@@ -265,4 +265,33 @@ Resumen Breve:`;
       return "No se pudo generar el resumen del chat en este momento.";
     }
   }
+
+  static async transcribeAudio(audioBuffer: Buffer, mimeType: string): Promise<string> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("Missing GEMINI_API_KEY");
+      return "";
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+
+    try {
+      const audioData = {
+        inlineData: {
+          data: audioBuffer.toString("base64"),
+          mimeType: mimeType,
+        },
+      };
+
+      const result = await model.generateContent([
+        audioData,
+        { text: "Transcribe exactamente el siguiente audio. Responde SOLO con la transcripción literal, sin ningún texto adicional, aclaración o comillas." }
+      ]);
+      return result.response.text().trim();
+    } catch (error) {
+      console.error("Error transcribiendo audio con Gemini:", error);
+      return "";
+    }
+  }
 }
