@@ -63,4 +63,10 @@ export class ConversationService {
       }
     });
   }
+
+  static async clearHistory(userId: string) {
+    await prisma.message.deleteMany({
+      where: { userId },
+    });
+  }
 }

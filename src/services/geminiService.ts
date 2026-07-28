@@ -34,7 +34,7 @@ IMPORTANTE: Hoy es ${currentDateStr}. Todas las fechas relativas (mañana, la pr
 Aquí tienes información específica del negocio (Horarios, precios, dirección):
 ${businessInfo}
 
-Responde siempre basándote en esta información. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
+Responde siempre basándote en esta información (precios, horarios, etc). IMPORTANTE: Esta información se actualiza constantemente. SIEMPRE debes priorizar esta información por encima de lo que se haya dicho en mensajes anteriores del historial. Si el precio u horario aquí es diferente al que mencionaste antes, corrige y usa el nuevo. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
 Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente. Si quiere cambiar o reprogramar su turno, usa reschedule_appointment.
 Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.
@@ -227,7 +227,8 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
           }
         }]);
 
-        return functionResult.response.text() || "Turno procesado.";
+        const text = functionResult.response.text();
+        return text || "Entendido. ¿Puedo ayudarte con algo más?";
       }
 
       const responseText = result.response.text();

@@ -69,6 +69,14 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
         console.log(`Received message from ${from} (${profileName || 'Unknown'}): ${msgBody}`);
 
         const user = await ConversationService.getUser(from, profileName);
+
+        if (msgBody.trim().toLowerCase() === "/reiniciar" || msgBody.trim().toLowerCase() === "/reset") {
+          await ConversationService.clearHistory(user.id);
+          await WhatsappService.sendMessage(from, "Memoria borrada. He olvidado nuestra conversación anterior. ¿En qué te puedo ayudar?");
+          res.sendStatus(200);
+          return;
+        }
+
         await ConversationService.addMessage(user.id, "user", msgBody);
 
         const history = await ConversationService.getHistory(user.id, 10);
