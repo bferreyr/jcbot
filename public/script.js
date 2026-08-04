@@ -824,35 +824,81 @@ async function loadProducts() {
         const response = await fetch('/api/products');
         const products = await response.json();
         
-        const grid = document.getElementById('productsGrid');
-        grid.innerHTML = '';
+        const container = document.getElementById('productsGrid');
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '15px';
+        container.innerHTML = '';
         
         if (products.length === 0) {
-            grid.innerHTML = '<p style="color:var(--text-secondary)">No hay productos cargados.</p>';
+            container.innerHTML = '<p style="color:var(--text-secondary)">No hay productos cargados.</p>';
             return;
         }
         
         products.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <img src="${p.imageUrl}" alt="${p.name}">
-                <h4>${p.name}</h4>
-                <p>${p.description}</p>
-                <div class="price">$${p.price}</div>
-                <div style="font-size: 0.8rem; color: ${p.isPublished ? 'var(--accent)' : 'var(--text-secondary)'};">
-                    ${p.isPublished ? 'Publicado en IG' : 'No publicado'}
+            const item = document.createElement('div');
+            item.className = 'product-list-item glass-panel';
+            item.innerHTML = `
+                <div class="product-image-wrapper">
+                    <img src="${p.imageUrl}" alt="${p.name}">
                 </div>
-                <div class="product-actions">
-                    <button class="btn-ig" onclick="publishProduct('${p.id}', false)" title="Publicar en Feed"><i class='bx bxl-instagram'></i> Feed</button>
-                    <button class="btn-ig" onclick="publishProduct('${p.id}', true)" title="Publicar en Historia"><i class='bx bxs-camera'></i> Historia</button>
+                <div class="product-details">
+                    <div class="product-header">
+                        <h4>${p.name}</h4>
+                        <div class="price">$${p.price}</div>
+                    </div>
+                    <p class="product-desc">${p.description}</p>
+                    <div class="product-status" style="color: ${p.isPublished ? 'var(--accent)' : 'var(--text-secondary)'};">
+                        <i class='bx ${p.isPublished ? 'bx-check-circle' : 'bx-time'}'></i>
+                        ${p.isPublished ? 'Publicado en IG' : 'No publicado'}
+                    </div>
                 </div>
-                <button class="btn-delete" onclick="deleteProduct('${p.id}')" style="margin-top:5px; width:100%;"><i class='bx bx-trash'></i> Eliminar</button>
+                <div class="product-actions-vertical">
+                    <div class="dropdown-wrapper">
+                        <button class="btn-ig-main" onclick="toggleIgDropdown('${p.id}')">
+                            <i class='bx bxl-instagram'></i> Publicar
+                        </button>
+                        <div class="ig-dropdown" id="ig-dropdown-${p.id}">
+                            <button onclick="publishProductWrapper('${p.id}', false)"><i class='bx bx-grid-alt'></i> Feed</button>
+                            <button onclick="publishProductWrapper('${p.id}', true)"><i class='bx bxs-camera'></i> Historia</button>
+                            <button onclick="publishProductWrapper('${p.id}', 'ambos')"><i class='bx bx-layer'></i> Ambos</button>
+                        </div>
+                    </div>
+                    <button class="btn-delete-main" onclick="deleteProduct('${p.id}')" title="Eliminar Producto">
+                        <i class='bx bx-trash'></i> Eliminar
+                    </button>
+                </div>
             `;
-            grid.appendChild(card);
+            container.appendChild(item);
         });
     } catch (error) {
         console.error('Error loading products:', error);
+    }
+}
+
+function toggleIgDropdown(id) {
+    // Cerrar los demás primero
+    document.querySelectorAll('.ig-dropdown').forEach(d => {
+        if (d.id !== `ig-dropdown-${id}`) d.classList.remove('show');
+    });
+    
+    const dropdown = document.getElementById(`ig-dropdown-${id}`);
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+async function publishProductWrapper(id, type) {
+    // Ocultar dropdown
+    const dropdown = document.getElementById(`ig-dropdown-${id}`);
+    if (dropdown) dropdown.classList.remove('show');
+
+    if (type === 'ambos') {
+        if (!confirm("¿Deseas publicar este producto en tu Historia y en tu Feed de Instagram?")) return;
+        await publishProduct(id, false, true); // silent
+        await publishProduct(id, true, false); // alert
+    } else {
+        await publishProduct(id, type, false);
     }
 }
 
@@ -890,8 +936,8 @@ async function createProduct(e) {
     }
 }
 
-async function publishProduct(id, isStory) {
-    if (!confirm(`¿Deseas publicar este producto en tu ${isStory ? 'Historia' : 'Feed'} de Instagram?`)) return;
+async function publishProduct(id, isStory, silent = false) {
+    if (!silent && !confirm(`¿Deseas publicar este producto en tu ${isStory ? 'Historia' : 'Feed'} de Instagram?`)) return;
     
     try {
         const res = await fetch(`/api/products/${id}/publish`, {
@@ -902,14 +948,14 @@ async function publishProduct(id, isStory) {
         const data = await res.json();
         
         if (res.ok) {
-            alert(data.message || "Publicado con éxito");
+            if (!silent) alert(data.message || "Publicado con éxito");
             loadProducts(); // refresh to show "Publicado"
         } else {
-            alert("Error: " + (data.error || "No se pudo publicar"));
+            if (!silent) alert("Error: " + (data.error || "No se pudo publicar"));
         }
     } catch (err) {
         console.error(err);
-        alert("Error de red al publicar");
+        if (!silent) alert("Error de red al publicar");
     }
 }
 
