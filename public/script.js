@@ -1032,7 +1032,7 @@ async function deleteProduct(id) {
         alert("Error de red");
     }
 }
-\n
+
 function filterProducts() {
     const query = document.getElementById('productSearch').value.toLowerCase();
     const rows = document.querySelectorAll('.product-row');
