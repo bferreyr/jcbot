@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
-import { getProducts, createProduct, deleteProduct, publishToInstagram } from "../controllers/productController";
+import { getProducts, createProduct, deleteProduct, publishToInstagram, updateProduct } from "../controllers/productController";
 import { requireRole } from "../middleware/auth";
 
 import fs from 'fs';
@@ -29,6 +29,7 @@ const upload = multer({ storage });
 // Admin and Dios can manage products
 router.get("/products", requireRole(["ADMIN", "DIOS"]), getProducts);
 router.post("/products", requireRole(["ADMIN", "DIOS"]), upload.single("image"), createProduct);
+router.put("/products/:id", requireRole(["ADMIN", "DIOS"]), upload.single("image"), updateProduct);
 router.delete("/products/:id", requireRole(["ADMIN", "DIOS"]), deleteProduct);
 router.post("/products/:id/publish", requireRole(["ADMIN", "DIOS"]), publishToInstagram);
 

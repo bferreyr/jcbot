@@ -64,6 +64,35 @@ export const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price } = req.body;
+    
+    // multer adds `file` object to req optionally
+    const file = (req as any).file;
+    const parsedPrice = price ? parseFloat(price) : undefined;
+
+    const data: any = {};
+    if (name) data.name = name;
+    if (description !== undefined) data.description = description;
+    if (parsedPrice) data.price = parsedPrice;
+    if (file) {
+      data.imageUrl = `/uploads/${file.filename}`;
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data
+    });
+
+    res.json(updatedProduct);
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ error: 'Error al actualizar el producto' });
+  }
+};
+
 export const publishToInstagram = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

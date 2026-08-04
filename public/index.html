@@ -288,13 +288,47 @@
                         <i class='bx bx-package' style="color:var(--accent); font-size:1.5rem;"></i>
                         <h3>Catálogo de Productos</h3>
                     </div>
-                    <div class="products-grid" id="productsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
-                        <!-- Product cards will be injected here -->
+                    <input type="text" id="productSearch" placeholder="Buscar productos..." onkeyup="filterProducts()" class="modern-select" style="margin-top: 15px; width: 100%; max-width: 400px;">
+                    <div style="overflow-x: auto; margin-top: 20px;">
+                        <table class="modern-table" style="width: 100%; min-width: 600px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">Imagen</th>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Precio</th>
+                                    <th>Estado IG</th>
+                                    <th style="text-align: right; width: 180px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- Product rows will be injected here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </main>
         </div>
         
+        <!-- Modal Editar Producto -->
+        <div class="modal-overlay" id="editProductModal" style="display: none;">
+            <div class="modal-content glass-panel" style="max-width: 400px; text-align: left;">
+                <h3 style="margin-top:0;">Editar Producto</h3>
+                <form id="editProductForm" onsubmit="submitEditProduct(event)" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <input type="hidden" id="editProdId">
+                    <input type="text" id="editProdName" placeholder="Nombre del producto" required class="modern-select">
+                    <textarea id="editProdDesc" placeholder="Descripción detallada..." required rows="3" class="modern-select" style="resize: vertical;"></textarea>
+                    <input type="number" id="editProdPrice" placeholder="Precio ($)" required step="0.01" class="modern-select">
+                    <input type="file" id="editProdImage" accept="image/*" class="modern-select" style="padding: 10px;">
+                    <small style="color: var(--text-secondary);">Sube una imagen solo si deseas cambiarla.</small>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" class="broadcast-btn" style="flex:1;">Guardar Cambios</button>
+                        <button type="button" onclick="closeEditProductModal()" class="broadcast-btn" style="flex:1; background: var(--bg-surface);">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Modal Editar Empleado -->
         <div class="modal-overlay" id="editUserModal" style="display: none;">
             <div class="modal-content glass-panel" style="max-width: 400px; text-align: left;">
