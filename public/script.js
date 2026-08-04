@@ -902,6 +902,54 @@ async function publishProductWrapper(id, type) {
     }
 }
 
+async function processImageToSquare(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const TARGET_SIZE = 1080;
+                canvas.width = TARGET_SIZE;
+                canvas.height = TARGET_SIZE;
+                
+                const ctx = canvas.getContext('2d');
+                // Fill background with white
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
+                
+                // Calculate dimensions to maintain aspect ratio
+                let drawWidth = TARGET_SIZE;
+                let drawHeight = TARGET_SIZE;
+                let offsetX = 0;
+                let offsetY = 0;
+                
+                if (img.width > img.height) {
+                    drawHeight = (img.height / img.width) * TARGET_SIZE;
+                    offsetY = (TARGET_SIZE - drawHeight) / 2;
+                } else {
+                    drawWidth = (img.width / img.height) * TARGET_SIZE;
+                    offsetX = (TARGET_SIZE - drawWidth) / 2;
+                }
+                
+                ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("Canvas toBlob failed"));
+                    }
+                }, 'image/jpeg', 0.9);
+            };
+            img.onerror = () => reject(new Error("Image load failed"));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error("FileReader failed"));
+        reader.readAsDataURL(file);
+    });
+}
+
 async function createProduct(e) {
     e.preventDefault();
     
@@ -910,11 +958,26 @@ async function createProduct(e) {
     const price = document.getElementById('prodPrice').value;
     const imageFile = document.getElementById('prodImage').files[0];
     
+    if (!imageFile) {
+        alert("Selecciona una imagen");
+        return;
+    }
+
+    // Procesa la imagen a formato cuadrado 1:1 para evitar errores de Instagram
+    let processedBlob;
+    try {
+        processedBlob = await processImageToSquare(imageFile);
+    } catch (err) {
+        console.error("Error processing image:", err);
+        alert("Error al procesar la imagen para Instagram");
+        return;
+    }
+    
     const formData = new FormData();
     formData.append('name', name);
     formData.append('description', desc);
     formData.append('price', price);
-    formData.append('image', imageFile);
+    formData.append('image', processedBlob, imageFile.name.replace(/\.[^/.]+$/, "") + ".jpg");
     
     try {
         const res = await fetch('/api/products', {
@@ -935,7 +998,6 @@ async function createProduct(e) {
         alert("Error de red");
     }
 }
-
 async function publishProduct(id, isStory, silent = false) {
     if (!silent && !confirm(`¿Deseas publicar este producto en tu ${isStory ? 'Historia' : 'Feed'} de Instagram?`)) return;
     
