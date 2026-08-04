@@ -21,7 +21,7 @@ export const createProduct = async (req: Request, res: Response) => {
     const { name, description, price } = req.body;
     
     // multer adds `file` object to req
-    const file = req.file;
+    const file = (req as any).file;
 
     if (!name || !price || !file) {
       return res.status(400).json({ error: 'Nombre, precio e imagen son obligatorios' });
