@@ -885,6 +885,15 @@ function toggleIgDropdown(id) {
     }
 }
 
+// Cerrar dropdowns de IG al hacer clic fuera
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.dropdown-wrapper')) {
+        document.querySelectorAll('.ig-dropdown.show').forEach(d => {
+            d.classList.remove('show');
+        });
+    }
+});
+
 async function publishProductWrapper(id, type) {
     // Ocultar dropdown
     const dropdown = document.getElementById(`ig-dropdown-${id}`);
