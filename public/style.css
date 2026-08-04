@@ -583,6 +583,18 @@ body {
     position: relative;
 }
 
+/* Products Area */
+.products-area {
+    flex: 1;
+    background-color: var(--bg-base);
+    padding: 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+}
+
 .agenda-header {
     margin-bottom: 24px;
 }
