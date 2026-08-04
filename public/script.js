@@ -93,6 +93,10 @@ function applyRoles() {
         document.getElementById('navMetrics').style.display = 'flex';
         document.getElementById('navStaff').style.display = 'flex';
     }
+    if (role === 'ADMIN' || role === 'DIOS') {
+        const navProducts = document.getElementById('navProducts');
+        if(navProducts) navProducts.style.display = 'flex';
+    }
     
     if (role === 'JUNIOR') {
         document.getElementById('navChats').style.display = 'none';
@@ -326,12 +330,14 @@ function switchTab(tab) {
     navAgenda.classList.remove('active');
     navMetrics.classList.remove('active');
     if (document.getElementById('navStaff')) document.getElementById('navStaff').classList.remove('active');
+    if (document.getElementById('navProducts')) document.getElementById('navProducts').classList.remove('active');
     
     chatsSidebar.style.display = 'none';
     chatArea.style.display = 'none';
     agendaArea.style.display = 'none';
     metricsArea.style.display = 'none';
     document.getElementById('staffArea').style.display = 'none';
+    if (document.getElementById('productsArea')) document.getElementById('productsArea').style.display = 'none';
     
     if (pollInterval) {
         clearInterval(pollInterval);
@@ -376,6 +382,12 @@ function switchTab(tab) {
         document.getElementById('staffArea').style.display = 'flex';
         document.getElementById('createUserForm').reset();
         loadStaff();
+    } else if (tab === 'products') {
+        if (currentUserData?.role !== 'ADMIN' && currentUserData?.role !== 'DIOS') return;
+        localStorage.setItem('activeTab', 'products');
+        document.getElementById('navProducts').classList.add('active');
+        document.getElementById('productsArea').style.display = 'flex';
+        loadProducts();
     }
 }
 
@@ -800,5 +812,118 @@ async function deleteUser(id) {
         loadStaff();
     } catch (e) {
         alert("Error al eliminar");
+    }
+}
+
+// ==========================================
+// PRODUCTS LOGIC
+// ==========================================
+
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+        
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = '';
+        
+        if (products.length === 0) {
+            grid.innerHTML = '<p style="color:var(--text-secondary)">No hay productos cargados.</p>';
+            return;
+        }
+        
+        products.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img src="${p.imageUrl}" alt="${p.name}">
+                <h4>${p.name}</h4>
+                <p>${p.description}</p>
+                <div class="price">$${p.price}</div>
+                <div style="font-size: 0.8rem; color: ${p.isPublished ? 'var(--accent)' : 'var(--text-secondary)'};">
+                    ${p.isPublished ? 'Publicado en IG' : 'No publicado'}
+                </div>
+                <div class="product-actions">
+                    <button class="btn-ig" onclick="publishProduct('${p.id}', false)" title="Publicar en Feed"><i class='bx bxl-instagram'></i> Feed</button>
+                    <button class="btn-ig" onclick="publishProduct('${p.id}', true)" title="Publicar en Historia"><i class='bx bxs-camera'></i> Historia</button>
+                </div>
+                <button class="btn-delete" onclick="deleteProduct('${p.id}')" style="margin-top:5px; width:100%;"><i class='bx bx-trash'></i> Eliminar</button>
+            `;
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error loading products:', error);
+    }
+}
+
+async function createProduct(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('prodName').value;
+    const desc = document.getElementById('prodDesc').value;
+    const price = document.getElementById('prodPrice').value;
+    const imageFile = document.getElementById('prodImage').files[0];
+    
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', desc);
+    formData.append('price', price);
+    formData.append('image', imageFile);
+    
+    try {
+        const res = await fetch('/api/products', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (res.ok) {
+            document.getElementById('createProductForm').reset();
+            alert("Producto guardado correctamente");
+            loadProducts();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo guardar"));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de red");
+    }
+}
+
+async function publishProduct(id, isStory) {
+    if (!confirm(`¿Deseas publicar este producto en tu ${isStory ? 'Historia' : 'Feed'} de Instagram?`)) return;
+    
+    try {
+        const res = await fetch(`/api/products/${id}/publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isStory })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+            alert(data.message || "Publicado con éxito");
+            loadProducts(); // refresh to show "Publicado"
+        } else {
+            alert("Error: " + (data.error || "No se pudo publicar"));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de red al publicar");
+    }
+}
+
+async function deleteProduct(id) {
+    if (!confirm("¿Seguro que deseas eliminar este producto?")) return;
+    
+    try {
+        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadProducts();
+        } else {
+            alert("Error al eliminar producto");
+        }
+    } catch (e) {
+        alert("Error de red");
     }
 }

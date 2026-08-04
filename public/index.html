@@ -39,6 +39,9 @@
                 <div class="nav-item" id="navMetrics" onclick="switchTab('metrics')" style="display: none;">
                     <i class='bx bx-bar-chart-alt-2'></i> Métricas
                 </div>
+                <div class="nav-item" id="navProducts" onclick="switchTab('products')" style="display: none;">
+                    <i class='bx bx-shopping-bag'></i> Productos
+                </div>
                 <div class="nav-item" id="navStaff" onclick="switchTab('staff')" style="display: none;">
                     <i class='bx bx-group'></i> Personal
                 </div>
@@ -255,6 +258,38 @@
                     </div>
                     <div class="staff-grid" id="staffGrid" style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
                         <!-- Staff cards will be injected here -->
+                    </div>
+                </div>
+            </main>
+
+            <!-- Products Area -->
+            <main class="products-area" id="productsArea" style="display: none; width: 100%; padding: 20px; overflow-y: auto;">
+                <header class="agenda-header" style="margin-bottom: 20px;">
+                    <h2>Gestión de Productos</h2>
+                    <p>Sube productos y publícalos directamente en Instagram (Feed/Historias).</p>
+                </header>
+
+                <div class="glass-panel advanced" style="margin-bottom: 20px;">
+                    <div class="advanced-header">
+                        <i class='bx bx-plus-circle' style="color:var(--accent); font-size:1.5rem;"></i>
+                        <h3>Nuevo Producto</h3>
+                    </div>
+                    <form id="createProductForm" onsubmit="createProduct(event)" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                        <input type="text" id="prodName" placeholder="Nombre del producto" required class="modern-select">
+                        <textarea id="prodDesc" placeholder="Descripción detallada..." required rows="3" class="modern-select" style="resize: vertical;"></textarea>
+                        <input type="number" id="prodPrice" placeholder="Precio ($)" required step="0.01" class="modern-select">
+                        <input type="file" id="prodImage" accept="image/*" required class="modern-select" style="padding: 10px;">
+                        <button type="submit" class="broadcast-btn" style="align-self: flex-start;">Guardar Producto</button>
+                    </form>
+                </div>
+
+                <div class="contacts-table-container glass-panel advanced">
+                    <div class="advanced-header">
+                        <i class='bx bx-package' style="color:var(--accent); font-size:1.5rem;"></i>
+                        <h3>Catálogo de Productos</h3>
+                    </div>
+                    <div class="products-grid" id="productsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <!-- Product cards will be injected here -->
                     </div>
                 </div>
             </main>

@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import webhookRoutes from "./routes/webhook";
 import apiRoutes from "./routes/api";
 import authRoutes from "./routes/auth";
+import productRoutes from "./routes/productRoutes";
 import path from "path";
 import { requireAuth, requireAuthHtml } from "./middleware/auth";
 
@@ -24,6 +25,7 @@ app.get("/style.css", (req, res) => res.sendFile(path.join(__dirname, "../public
 
 // Rutas protegidas
 app.use("/api", requireAuth, apiRoutes);
+app.use("/api", requireAuth, productRoutes);
 
 import { ReminderService } from "./services/reminderService";
 
