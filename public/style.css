@@ -152,6 +152,7 @@ body {
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -270,6 +271,7 @@ body {
     gap: 10px;
     background: linear-gradient(135deg, #06b6d4, #3b82f6);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .nav-brand .nav-logo-icon {
@@ -1320,65 +1322,63 @@ input:checked + .slider:before {
     color: var(--accent);
 }
 
- / *   P r o d u c t   C a r d   S t y l e s   * / 
- . p r o d u c t - c a r d   { 
-         b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 4 ) ; 
-         b o r d e r :   1 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
-         b o r d e r - r a d i u s :   1 2 p x ; 
-         p a d d i n g :   1 5 p x ; 
-         d i s p l a y :   f l e x ; 
-         f l e x - d i r e c t i o n :   c o l u m n ; 
-         g a p :   1 0 p x ; 
- } 
- . p r o d u c t - c a r d   i m g   { 
-         w i d t h :   1 0 0 % ; 
-         h e i g h t :   2 0 0 p x ; 
-         o b j e c t - f i t :   c o v e r ; 
-         b o r d e r - r a d i u s :   8 p x ; 
- } 
- . p r o d u c t - c a r d   h 4   { 
-         m a r g i n :   0 ; 
-         c o l o r :   v a r ( - - a c c e n t ) ; 
-         f o n t - s i z e :   1 . 2 r e m ; 
- } 
- . p r o d u c t - c a r d   p   { 
-         m a r g i n :   0 ; 
-         c o l o r :   v a r ( - - t e x t - s e c o n d a r y ) ; 
-         f o n t - s i z e :   0 . 9 r e m ; 
- } 
- . p r o d u c t - c a r d   . p r i c e   { 
-         f o n t - w e i g h t :   b o l d ; 
-         c o l o r :   w h i t e ; 
-         f o n t - s i z e :   1 . 1 r e m ; 
- } 
- . p r o d u c t - a c t i o n s   { 
-         d i s p l a y :   f l e x ; 
-         g a p :   1 0 p x ; 
-         m a r g i n - t o p :   a u t o ; 
- } 
- . p r o d u c t - a c t i o n s   b u t t o n   { 
-         f l e x :   1 ; 
-         p a d d i n g :   8 p x ; 
-         b o r d e r - r a d i u s :   6 p x ; 
-         b o r d e r :   n o n e ; 
-         c u r s o r :   p o i n t e r ; 
-         f o n t - w e i g h t :   5 0 0 ; 
-         t r a n s i t i o n :   a l l   0 . 3 s ; 
- } 
- . b t n - i g   { 
-         b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 4 5 d e g ,   # f 0 9 4 3 3   0 % ,   # e 6 6 8 3 c   2 5 % ,   # d c 2 7 4 3   5 0 % ,   # c c 2 3 6 6   7 5 % ,   # b c 1 8 8 8   1 0 0 % ) ; 
-         c o l o r :   w h i t e ; 
- } 
- . b t n - i g : h o v e r   { 
-         o p a c i t y :   0 . 9 ; 
- } 
- . b t n - d e l e t e   { 
-         b a c k g r o u n d :   r g b a ( 2 3 9 ,   6 8 ,   6 8 ,   0 . 1 ) ; 
-         c o l o r :   # e f 4 4 4 4 ; 
-         b o r d e r :   1 p x   s o l i d   r g b a ( 2 3 9 ,   6 8 ,   6 8 ,   0 . 3 ) ; 
- } 
- . b t n - d e l e t e : h o v e r   { 
-         b a c k g r o u n d :   r g b a ( 2 3 9 ,   6 8 ,   6 8 ,   0 . 2 ) ; 
- } 
-  
- 
+/* Product Card Styles */
+.product-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.product-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.product-card h4 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 1.2rem;
+}
+.product-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.product-card .price {
+    font-weight: bold;
+    color: white;
+    font-size: 1.1rem;
+}
+.product-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+.product-actions button {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+.btn-ig {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    color: white;
+}
+.btn-ig:hover {
+    opacity: 0.9;
+}
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
