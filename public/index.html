@@ -264,24 +264,15 @@
 
             <!-- Products Area -->
             <main class="products-area" id="productsArea" style="display: none; flex-direction: column; width: 100%; padding: 20px; overflow-y: auto;">
-                <header class="agenda-header" style="margin-bottom: 20px;">
-                    <h2>Gestión de Productos</h2>
-                    <p>Sube productos y publícalos directamente en Instagram (Feed/Historias).</p>
-                </header>
-
-                <div class="glass-panel advanced" style="margin-bottom: 20px;">
-                    <div class="advanced-header">
-                        <i class='bx bx-plus-circle' style="color:var(--accent); font-size:1.5rem;"></i>
-                        <h3>Nuevo Producto</h3>
+                <header class="agenda-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="margin-top: 0;">Gestión de Productos</h2>
+                        <p style="margin-bottom: 0;">Sube productos y publícalos directamente en Instagram (Feed/Historias).</p>
                     </div>
-                    <form id="createProductForm" onsubmit="createProduct(event)" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
-                        <input type="text" id="prodName" placeholder="Nombre del producto" required class="modern-select">
-                        <textarea id="prodDesc" placeholder="Descripción detallada..." required rows="3" class="modern-select" style="resize: vertical;"></textarea>
-                        <input type="number" id="prodPrice" placeholder="Precio ($)" required step="0.01" class="modern-select">
-                        <input type="file" id="prodImage" accept="image/*" required class="modern-select" style="padding: 10px;">
-                        <button type="submit" class="broadcast-btn" style="align-self: flex-start;">Guardar Producto</button>
-                    </form>
-                </div>
+                    <button class="broadcast-btn" onclick="openCreateProductModal()">
+                        <i class='bx bx-plus'></i> Nuevo Producto
+                    </button>
+                </header>
 
                 <div class="contacts-table-container glass-panel advanced">
                     <div class="advanced-header">
@@ -310,6 +301,23 @@
             </main>
         </div>
         
+        <!-- Modal Crear Producto -->
+        <div class="modal-overlay" id="createProductModal" style="display: none;">
+            <div class="modal-content glass-panel" style="max-width: 400px; text-align: left;">
+                <h3 style="margin-top:0;">Nuevo Producto</h3>
+                <form id="createProductForm" onsubmit="createProduct(event)" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <input type="text" id="prodName" placeholder="Nombre del producto" required class="modern-select">
+                    <textarea id="prodDesc" placeholder="Descripción detallada..." required rows="3" class="modern-select" style="resize: vertical;"></textarea>
+                    <input type="number" id="prodPrice" placeholder="Precio ($)" required step="0.01" class="modern-select">
+                    <input type="file" id="prodImage" accept="image/*" required class="modern-select" style="padding: 10px;">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" class="broadcast-btn" style="flex:1;">Guardar Producto</button>
+                        <button type="button" onclick="closeCreateProductModal()" class="broadcast-btn" style="flex:1; background: var(--bg-surface);">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Modal Editar Producto -->
         <div class="modal-overlay" id="editProductModal" style="display: none;">
             <div class="modal-content glass-panel" style="max-width: 400px; text-align: left;">

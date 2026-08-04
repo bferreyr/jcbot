@@ -993,6 +993,7 @@ async function createProduct(e) {
         
         if (res.ok) {
             document.getElementById('createProductForm').reset();
+            closeCreateProductModal();
             alert("Producto guardado correctamente");
             loadProducts();
         } else {
@@ -1003,6 +1004,14 @@ async function createProduct(e) {
         console.error(err);
         alert("Error de red");
     }
+}
+
+function openCreateProductModal() {
+    document.getElementById('createProductModal').style.display = 'flex';
+}
+
+function closeCreateProductModal() {
+    document.getElementById('createProductModal').style.display = 'none';
 }
 async function publishProduct(id, isStory, silent = false) {
     if (!silent && !confirm(`¿Deseas publicar este producto en tu ${isStory ? 'Historia' : 'Feed'} de Instagram?`)) return;
