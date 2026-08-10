@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { SSEService } from "./sseService";
 
 const prisma = new PrismaClient();
 
@@ -38,6 +39,9 @@ export class ConversationService {
         where: { id: userId },
         data: role === "user" ? { hasUnreadMessages: true } : { updatedAt: new Date() }
       });
+
+      // Notify clients of the update
+      SSEService.notifyUpdate();
     } catch (error) {
       console.error("Error adding message:", error);
     }

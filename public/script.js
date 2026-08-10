@@ -1,5 +1,5 @@
 let currentUserId = null;
-let pollInterval = null;
+let sseConnection = null;
 let calendar = null;
 let allUsers = [];
 let currentUserData = null;
@@ -68,7 +68,45 @@ async function init() {
         filterUsers(e.target.value);
     });
     
+    
     initMobileView();
+    setupSSE();
+}
+
+function setupSSE() {
+    if (sseConnection) return;
+    sseConnection = new EventSource('/api/stream');
+    sseConnection.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'update') {
+                // Background update users list (maintains UI state)
+                if (currentUserData?.role !== 'JUNIOR') {
+                    loadUsersSilent();
+                }
+                // Refresh chat if open
+                if (currentUserId && document.getElementById('navChats').classList.contains('active')) {
+                    loadMessages(currentUserId, true);
+                }
+            }
+        } catch (e) {
+            console.error("SSE parse error", e);
+        }
+    };
+}
+
+async function loadUsersSilent() {
+    try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+            const users = await response.json();
+            allUsers = users;
+            renderUsers(users);
+            renderContactsTable(users);
+        }
+    } catch (error) {
+        console.error('Error in silent user reload:', error);
+    }
 }
 
 async function loadMe() {
@@ -258,10 +296,6 @@ function selectUser(user) {
     if (window.innerWidth <= 768) {
         chatsSidebar.classList.remove('open');
     }
-    
-    // Start Polling
-    if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(() => loadMessages(user.id, true), 5000);
 }
 
 async function loadMessages(userId, silent = false) {
@@ -341,11 +375,6 @@ function switchTab(tab) {
     document.getElementById('staffArea').style.display = 'none';
     if (document.getElementById('productsArea')) document.getElementById('productsArea').style.display = 'none';
     
-    if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-    }
-    
     if (tab === 'chats') {
         if (currentUserData?.role === 'JUNIOR') return; // Bloqueado
         localStorage.setItem('activeTab', 'chats');
@@ -355,10 +384,6 @@ function switchTab(tab) {
         
         if (window.innerWidth <= 768 && !currentUserId) {
             chatsSidebar.classList.add('open');
-        }
-        
-        if (currentUserId) {
-            pollInterval = setInterval(() => loadMessages(currentUserId, true), 5000);
         }
     } else if (tab === 'agenda') {
         localStorage.setItem('activeTab', 'agenda');

@@ -1,9 +1,20 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { requireRole } from "../middleware/auth";
+import { SSEService } from "../services/sseService";
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Stream endpoint for real-time updates -> ALL STAFF
+router.get("/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  SSEService.addClient(res);
+});
 
 // Get all users (contacts) -> ADMIN, DIOS, EXPERTO
 router.get("/users", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
@@ -43,6 +54,9 @@ router.get("/users/:id/messages", requireRole(["ADMIN", "DIOS", "EXPERTO"]), asy
       where: { id },
       data: { hasUnreadMessages: false },
     });
+    
+    // Notify clients that unread status changed
+    SSEService.notifyUpdate();
 
     res.json(messages);
   } catch (error) {
