@@ -1340,3 +1340,12 @@ input:checked + .slider:before {
     transform: scale(1.1);
     transition: all 0.2s;
 }
+.unread-dot {
+    width: 10px;
+    height: 10px;
+    background-color: var(--accent, #ff4757);
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 8px;
+    box-shadow: 0 0 5px var(--accent, #ff4757);
+}

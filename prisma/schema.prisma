@@ -16,6 +16,7 @@ model User {
   sentiment String   @default("NEUTRAL")
   isUrgent  Boolean  @default(false)
   botPaused Boolean  @default(false)
+  hasUnreadMessages Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

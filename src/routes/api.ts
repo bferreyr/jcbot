@@ -37,6 +37,13 @@ router.get("/users/:id/messages", requireRole(["ADMIN", "DIOS", "EXPERTO"]), asy
         createdAt: "asc",
       },
     });
+
+    // Mark as read when an admin opens the chat
+    await prisma.user.update({
+      where: { id },
+      data: { hasUnreadMessages: false },
+    });
+
     res.json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);

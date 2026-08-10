@@ -32,6 +32,12 @@ export class ConversationService {
           sentByName
         },
       });
+
+      // Update the user to bump updatedAt and mark as unread if from user
+      await prisma.user.update({
+        where: { id: userId },
+        data: role === "user" ? { hasUnreadMessages: true } : { updatedAt: new Date() }
+      });
     } catch (error) {
       console.error("Error adding message:", error);
     }

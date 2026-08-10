@@ -194,6 +194,7 @@ function renderUsers(users) {
         else if (user.sentiment === 'FRUSTRADO') sentimentEmoji = '😠';
         
         const urgencyIcon = user.isUrgent ? `<i class='bx bxs-error urgency-indicator' title="Urgente"></i>` : '';
+        const unreadIndicator = user.hasUnreadMessages ? `<div class="unread-dot"></div>` : '';
         
         div.innerHTML = `
             <div class="avatar-placeholder">${initial}</div>
@@ -203,6 +204,7 @@ function renderUsers(users) {
                     <span class="status-badge ${statusClass}">${user.status || 'LEAD'}</span>
                     <span class="sentiment-icon">${sentimentEmoji}</span>
                     ${urgencyIcon}
+                    ${unreadIndicator}
                 </div>
                 <div class="contact-phone"><i class='bx bx-phone'></i> ${user.phone}</div>
                 ${user.lastIntent ? `<div class="contact-intent"><i class='bx bx-target-lock'></i> ${user.lastIntent}</div>` : ''}
