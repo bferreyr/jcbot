@@ -36,11 +36,59 @@ function formatPriceDisplay(price: string | number): string {
 }
 
 export class BotDataService {
+  private static tablesEnsured = false;
+
+  static async ensureTables(): Promise<void> {
+    if (this.tablesEnsured) return;
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Repair" (
+          "id" TEXT NOT NULL,
+          "model" TEXT NOT NULL,
+          "part" TEXT NOT NULL,
+          "quality" TEXT NOT NULL,
+          "price" TEXT NOT NULL,
+          "estimatedTime" TEXT NOT NULL,
+          "notes" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "Repair_pkey" PRIMARY KEY ("id")
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "PlanCanje" (
+          "id" TEXT NOT NULL,
+          "model" TEXT NOT NULL,
+          "condition" TEXT NOT NULL,
+          "price" TEXT NOT NULL,
+          "notes" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "PlanCanje_pkey" PRIMARY KEY ("id")
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "BusinessInfo" (
+          "id" TEXT NOT NULL,
+          "key" TEXT NOT NULL,
+          "value" TEXT NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "BusinessInfo_pkey" PRIMARY KEY ("id")
+        );
+      `);
+      this.tablesEnsured = true;
+    } catch (error) {
+      console.error("Error ensuring bot data tables:", error);
+    }
+  }
+
   /**
    * Obtiene toda la información general del negocio desde la base de datos.
    */
   static async getBusinessInfo(): Promise<string> {
     try {
+      await this.ensureTables();
       const infoRows = await prisma.businessInfo.findMany({
         orderBy: { createdAt: "asc" },
       });
@@ -65,6 +113,7 @@ export class BotDataService {
    */
   static async searchRepairs(query: string): Promise<string> {
     try {
+      await this.ensureTables();
       const allRepairs = await prisma.repair.findMany({
         orderBy: [{ model: "asc" }, { part: "asc" }],
       });
@@ -114,6 +163,7 @@ export class BotDataService {
    */
   static async searchPlanCanje(query: string): Promise<string> {
     try {
+      await this.ensureTables();
       const allCanje = await prisma.planCanje.findMany({
         orderBy: { model: "asc" },
       });

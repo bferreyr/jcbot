@@ -146,13 +146,6 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
         },
       ];
 
-      // Usamos gemini-1.5-flash que es el modelo rápido y recomendado por defecto
-      const model = genAI.getGenerativeModel({
-        model: "gemini-3.1-flash-lite",
-        systemInstruction: systemPrompt,
-        tools: tools,
-      });
-
       // Transformar el historial al formato de Gemini
       let formattedHistory = messageHistory.map(msg => ({
         role: msg.role === "user" ? "user" : "model",
@@ -179,60 +172,88 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
         }
       }
 
-      const chat = model.startChat({
-        history: validHistory,
-      });
+      // Lista de modelos con fallback automático ante picos de demanda (503/429)
+      const modelCandidates = [
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-2.0-flash",
+      ];
 
-      const result = await chat.sendMessage(currentMessage);
-      const call = result.response.functionCalls()?.[0];
+      let lastError: any = null;
 
-      if (call) {
-        // Ejecutar la función solicitada por Gemini
-        let apiResponse = "";
-        const args = call.args as any;
+      for (const modelName of modelCandidates) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            systemInstruction: systemPrompt,
+            tools: tools,
+          });
 
-        if (call.name === "check_availability") {
-          const date = args.date;
-          apiResponse = await AppointmentService.checkAvailability(date as string);
-        } else if (call.name === "book_appointment") {
-          const { date, time, reason } = args;
-          apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
-        } else if (call.name === "reschedule_appointment") {
-          const { date, time, reason } = args;
-          apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
-        } else if (call.name === "get_repair_cost") {
-          const query = args.query;
-          apiResponse = await BotDataService.searchRepairs(query as string);
-        } else if (call.name === "get_plan_canje_info") {
-          const model = args.model;
-          apiResponse = await BotDataService.searchPlanCanje(model as string);
-        } else if (call.name === "get_accessory_stock") {
-          const query = args.query;
-          apiResponse = await BotDataService.searchProducts(query as string);
-        } else if (call.name === "update_crm_status") {
-          const { status, intent, sentiment, isUrgent } = args;
-          await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);
-          apiResponse = "CRM Actualizado con éxito.";
-        } else if (call.name === "log_faq") {
-          const { category, question } = args;
-          await ConversationService.logFAQ(category as string, question as string);
-          apiResponse = "FAQ registrada con éxito.";
-        }
+          const chat = model.startChat({
+            history: validHistory.map(m => ({
+              role: m.role,
+              parts: [{ text: m.parts[0].text }]
+            })),
+          });
 
-        // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
-        const functionResult = await chat.sendMessage([{
-          functionResponse: {
-            name: call.name,
-            response: { result: apiResponse }
+          const result = await chat.sendMessage(currentMessage);
+          const call = result.response.functionCalls()?.[0];
+
+          if (call) {
+            // Ejecutar la función solicitada por Gemini
+            let apiResponse = "";
+            const args = call.args as any;
+
+            if (call.name === "check_availability") {
+              const date = args.date;
+              apiResponse = await AppointmentService.checkAvailability(date as string);
+            } else if (call.name === "book_appointment") {
+              const { date, time, reason } = args;
+              apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
+            } else if (call.name === "reschedule_appointment") {
+              const { date, time, reason } = args;
+              apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
+            } else if (call.name === "get_repair_cost") {
+              const query = args.query;
+              apiResponse = await BotDataService.searchRepairs(query as string);
+            } else if (call.name === "get_plan_canje_info") {
+              const modelArg = args.model;
+              apiResponse = await BotDataService.searchPlanCanje(modelArg as string);
+            } else if (call.name === "get_accessory_stock") {
+              const query = args.query;
+              apiResponse = await BotDataService.searchProducts(query as string);
+            } else if (call.name === "update_crm_status") {
+              const { status, intent, sentiment, isUrgent } = args;
+              await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);
+              apiResponse = "CRM Actualizado con éxito.";
+            } else if (call.name === "log_faq") {
+              const { category, question } = args;
+              await ConversationService.logFAQ(category as string, question as string);
+              apiResponse = "FAQ registrada con éxito.";
+            }
+
+            // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
+            const functionResult = await chat.sendMessage([{
+              functionResponse: {
+                name: call.name,
+                response: { result: apiResponse }
+              }
+            }]);
+
+            const text = functionResult.response.text();
+            return text || "Entendido. ¿Puedo ayudarte con algo más?";
           }
-        }]);
 
-        const text = functionResult.response.text();
-        return text || "Entendido. ¿Puedo ayudarte con algo más?";
+          const responseText = result.response.text();
+          return responseText || "Lo siento, no pude procesar tu mensaje.";
+        } catch (err: any) {
+          lastError = err;
+          console.warn(`Modelo ${modelName} falló (${err?.status || err?.message}). Intentando siguiente modelo de respaldo...`);
+        }
       }
 
-      const responseText = result.response.text();
-      return responseText || "Lo siento, no pude procesar tu mensaje.";
+      throw lastError;
     } catch (error) {
       console.error("Error con Gemini:", error);
       return "Lo siento, estoy teniendo problemas técnicos en este momento. Intenta de nuevo más tarde.";
@@ -244,8 +265,6 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
     if (!apiKey) return "Error: API key no configurada.";
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
-
     const chatText = history.map(h => `${h.role === 'user' ? 'Cliente' : 'Agente/Bot'}: ${h.content}`).join('\n');
     
     const prompt = `Analiza el siguiente historial de chat entre un cliente y el soporte técnico (Bot/Agente).
@@ -258,13 +277,17 @@ ${chatText}
 
 Resumen Breve:`;
 
-    try {
-      const result = await model.generateContent(prompt);
-      return result.response.text();
-    } catch (error) {
-      console.error("Error resumiendo chat:", error);
-      return "No se pudo generar el resumen del chat en este momento.";
+    const modelCandidates = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.0-flash"];
+    for (const modelName of modelCandidates) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+      } catch (error) {
+        console.warn(`Error resumiendo con ${modelName}, probando siguiente...`);
+      }
     }
+    return "No se pudo generar el resumen del chat en este momento.";
   }
 
   static async transcribeAudio(audioBuffer: Buffer, mimeType: string): Promise<string> {
@@ -275,24 +298,26 @@ Resumen Breve:`;
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+    const audioData = {
+      inlineData: {
+        data: audioBuffer.toString("base64"),
+        mimeType: mimeType,
+      },
+    };
 
-    try {
-      const audioData = {
-        inlineData: {
-          data: audioBuffer.toString("base64"),
-          mimeType: mimeType,
-        },
-      };
-
-      const result = await model.generateContent([
-        audioData,
-        { text: "Transcribe exactamente el siguiente audio. Responde SOLO con la transcripción literal, sin ningún texto adicional, aclaración o comillas." }
-      ]);
-      return result.response.text().trim();
-    } catch (error) {
-      console.error("Error transcribiendo audio con Gemini:", error);
-      return "";
+    const modelCandidates = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.0-flash"];
+    for (const modelName of modelCandidates) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent([
+          audioData,
+          { text: "Transcribe exactamente el siguiente audio. Responde SOLO con la transcripción literal, sin ningún texto adicional, aclaración o comillas." }
+        ]);
+        return result.response.text().trim();
+      } catch (error) {
+        console.warn(`Error transcribiendo audio con ${modelName}, probando siguiente...`);
+      }
     }
+    return "";
   }
 }

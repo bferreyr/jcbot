@@ -225,6 +225,7 @@ router.post("/users/:id/toggle-bot", requireRole(["ADMIN", "DIOS"]), async (req,
 });
 
 import { GeminiService } from "../services/geminiService";
+import { BotDataService } from "../services/botDataService";
 
 // Summarize Chat -> ADMIN, DIOS, EXPERTO
 router.get("/users/:id/summary", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
@@ -280,6 +281,7 @@ router.post("/broadcast", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
 
 router.get("/repairs", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
   try {
+    await BotDataService.ensureTables();
     const repairs = await prisma.repair.findMany({
       orderBy: [{ model: "asc" }, { part: "asc" }, { createdAt: "desc" }]
     });
@@ -352,6 +354,7 @@ router.delete("/repairs/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) =
 
 router.get("/plan-canje", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
   try {
+    await BotDataService.ensureTables();
     const items = await prisma.planCanje.findMany({
       orderBy: [{ model: "asc" }, { createdAt: "desc" }]
     });
@@ -420,6 +423,7 @@ router.delete("/plan-canje/:id", requireRole(["ADMIN", "DIOS"]), async (req, res
 
 router.get("/business-info", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
   try {
+    await BotDataService.ensureTables();
     const info = await prisma.businessInfo.findMany({
       orderBy: { createdAt: "asc" }
     });

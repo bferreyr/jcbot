@@ -28,6 +28,7 @@ app.use("/api", requireAuth, apiRoutes);
 app.use("/api", requireAuth, productRoutes);
 
 import { ReminderService } from "./services/reminderService";
+import { BotDataService } from "./services/botDataService";
 
 // Proteger index.html
 app.get("/", requireAuthHtml, (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
@@ -36,7 +37,8 @@ app.get("/index.html", requireAuthHtml, (req, res) => res.sendFile(path.join(__d
 // Servir el resto de archivos estáticos (JS/CSS)
 app.use(express.static(path.join(__dirname, "../public")));
 
-// Iniciar cron jobs
+// Asegurar tablas del bot en la base de datos e iniciar cron jobs
+BotDataService.ensureTables();
 ReminderService.start();
 
 const PORT = process.env.PORT || 3000;
