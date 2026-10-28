@@ -4,6 +4,68 @@ import { AppointmentService } from "./appointmentService";
 import { ConversationService } from "./conversationService";
 
 export class GeminiService {
+  private static cachedDynamicModels: string[] | null = null;
+
+  private static async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Obtiene la lista de modelos candidatos, incluyendo los recomendados actualmente por la API
+   * y descubriendo dinámicamente los modelos disponibles en la cuenta si fuera necesario.
+   */
+  private static async getModelCandidates(apiKey: string): Promise<string[]> {
+    const baseModels = [
+      "gemini-3.8-flash",
+      "gemini-flash-latest",
+      "gemini-flash-lite-latest",
+      "gemini-3.1-flash-lite",
+    ];
+
+    if (this.cachedDynamicModels && this.cachedDynamicModels.length > 0) {
+      return [...new Set([...this.cachedDynamicModels, ...baseModels])];
+    }
+
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.models)) {
+          const validModels: string[] = data.models
+            .filter((m: any) =>
+              Array.isArray(m.supportedGenerationMethods) &&
+              m.supportedGenerationMethods.includes("generateContent") &&
+              typeof m.name === "string" &&
+              m.name.includes("gemini") &&
+              !m.name.includes("embedding") &&
+              !m.name.includes("imagen") &&
+              !m.name.includes("veo") &&
+              !m.name.includes("tts") &&
+              !m.name.includes("audio")
+            )
+            .map((m: any) => (m.name as string).replace(/^models\//, ""));
+
+          // Priorizar modelos flash
+          validModels.sort((a, b) => {
+            const aFlash = a.includes("flash") ? 0 : 1;
+            const bFlash = b.includes("flash") ? 0 : 1;
+            return aFlash - bFlash;
+          });
+
+          if (validModels.length > 0) {
+            this.cachedDynamicModels = [...new Set(["gemini-3.8-flash", ...validModels])];
+            console.log("Modelos Gemini disponibles detectados:", this.cachedDynamicModels.slice(0, 6).join(", "));
+            return this.cachedDynamicModels;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo consultar la lista dinámica de modelos Gemini, usando lista por defecto.");
+    }
+
+    return baseModels;
+  }
+
   static async generateResponse(
     userId: string,
     messageHistory: { role: "user" | "assistant"; content: string }[],
@@ -172,84 +234,88 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
         }
       }
 
-      // Lista de modelos con fallback automático ante picos de demanda (503/429)
-      const modelCandidates = [
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-3.1-flash-lite",
-        "gemini-2.0-flash",
-      ];
+      // Lista de modelos con descubrimiento dinámico y fallback ante picos de demanda (503/429)
+      const modelCandidates = await this.getModelCandidates(apiKey);
 
       let lastError: any = null;
 
       for (const modelName of modelCandidates) {
-        try {
-          const model = genAI.getGenerativeModel({
-            model: modelName,
-            systemInstruction: systemPrompt,
-            tools: tools,
-          });
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const model = genAI.getGenerativeModel({
+              model: modelName,
+              systemInstruction: systemPrompt,
+              tools: tools,
+            });
 
-          const chat = model.startChat({
-            history: validHistory.map(m => ({
-              role: m.role,
-              parts: [{ text: m.parts[0].text }]
-            })),
-          });
+            const chat = model.startChat({
+              history: validHistory.map(m => ({
+                role: m.role,
+                parts: [{ text: m.parts[0].text }]
+              })),
+            });
 
-          const result = await chat.sendMessage(currentMessage);
-          const call = result.response.functionCalls()?.[0];
+            const result = await chat.sendMessage(currentMessage);
+            const call = result.response.functionCalls()?.[0];
 
-          if (call) {
-            // Ejecutar la función solicitada por Gemini
-            let apiResponse = "";
-            const args = call.args as any;
+            if (call) {
+              // Ejecutar la función solicitada por Gemini
+              let apiResponse = "";
+              const args = call.args as any;
 
-            if (call.name === "check_availability") {
-              const date = args.date;
-              apiResponse = await AppointmentService.checkAvailability(date as string);
-            } else if (call.name === "book_appointment") {
-              const { date, time, reason } = args;
-              apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
-            } else if (call.name === "reschedule_appointment") {
-              const { date, time, reason } = args;
-              apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
-            } else if (call.name === "get_repair_cost") {
-              const query = args.query;
-              apiResponse = await BotDataService.searchRepairs(query as string);
-            } else if (call.name === "get_plan_canje_info") {
-              const modelArg = args.model;
-              apiResponse = await BotDataService.searchPlanCanje(modelArg as string);
-            } else if (call.name === "get_accessory_stock") {
-              const query = args.query;
-              apiResponse = await BotDataService.searchProducts(query as string);
-            } else if (call.name === "update_crm_status") {
-              const { status, intent, sentiment, isUrgent } = args;
-              await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);
-              apiResponse = "CRM Actualizado con éxito.";
-            } else if (call.name === "log_faq") {
-              const { category, question } = args;
-              await ConversationService.logFAQ(category as string, question as string);
-              apiResponse = "FAQ registrada con éxito.";
+              if (call.name === "check_availability") {
+                const date = args.date;
+                apiResponse = await AppointmentService.checkAvailability(date as string);
+              } else if (call.name === "book_appointment") {
+                const { date, time, reason } = args;
+                apiResponse = await AppointmentService.bookAppointment(userId, date as string, time as string, reason as string);
+              } else if (call.name === "reschedule_appointment") {
+                const { date, time, reason } = args;
+                apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
+              } else if (call.name === "get_repair_cost") {
+                const query = args.query;
+                apiResponse = await BotDataService.searchRepairs(query as string);
+              } else if (call.name === "get_plan_canje_info") {
+                const modelArg = args.model;
+                apiResponse = await BotDataService.searchPlanCanje(modelArg as string);
+              } else if (call.name === "get_accessory_stock") {
+                const query = args.query;
+                apiResponse = await BotDataService.searchProducts(query as string);
+              } else if (call.name === "update_crm_status") {
+                const { status, intent, sentiment, isUrgent } = args;
+                await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);
+                apiResponse = "CRM Actualizado con éxito.";
+              } else if (call.name === "log_faq") {
+                const { category, question } = args;
+                await ConversationService.logFAQ(category as string, question as string);
+                apiResponse = "FAQ registrada con éxito.";
+              }
+
+              // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
+              const functionResult = await chat.sendMessage([{
+                functionResponse: {
+                  name: call.name,
+                  response: { result: apiResponse }
+                }
+              }]);
+
+              const text = functionResult.response.text();
+              return text || "Entendido. ¿Puedo ayudarte con algo más?";
             }
 
-            // Devolver el resultado de la función a Gemini para que genere la respuesta final al usuario
-            const functionResult = await chat.sendMessage([{
-              functionResponse: {
-                name: call.name,
-                response: { result: apiResponse }
-              }
-            }]);
-
-            const text = functionResult.response.text();
-            return text || "Entendido. ¿Puedo ayudarte con algo más?";
+            const responseText = result.response.text();
+            return responseText || "Lo siento, no pude procesar tu mensaje.";
+          } catch (err: any) {
+            lastError = err;
+            const status = err?.status || (String(err?.message).includes("503") ? 503 : undefined);
+            if (status === 503 && attempt === 1) {
+              console.warn(`Modelo ${modelName} con alta demanda (503). Reintentando en 1.5s...`);
+              await this.sleep(1500);
+              continue;
+            }
+            console.warn(`Modelo ${modelName} falló (${status || err?.message}). Intentando siguiente modelo de respaldo...`);
+            break;
           }
-
-          const responseText = result.response.text();
-          return responseText || "Lo siento, no pude procesar tu mensaje.";
-        } catch (err: any) {
-          lastError = err;
-          console.warn(`Modelo ${modelName} falló (${err?.status || err?.message}). Intentando siguiente modelo de respaldo...`);
         }
       }
 
@@ -277,7 +343,7 @@ ${chatText}
 
 Resumen Breve:`;
 
-    const modelCandidates = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.0-flash"];
+    const modelCandidates = await this.getModelCandidates(apiKey);
     for (const modelName of modelCandidates) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
@@ -305,7 +371,7 @@ Resumen Breve:`;
       },
     };
 
-    const modelCandidates = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.0-flash"];
+    const modelCandidates = await this.getModelCandidates(apiKey);
     for (const modelName of modelCandidates) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
