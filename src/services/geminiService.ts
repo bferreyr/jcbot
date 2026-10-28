@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, SchemaType, Tool } from "@google/generative-ai";
-import { GoogleSheetsService } from "./googleSheetsService";
+import { BotDataService } from "./botDataService";
 import { AppointmentService } from "./appointmentService";
 import { ConversationService } from "./conversationService";
 
@@ -17,7 +17,7 @@ export class GeminiService {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const businessInfo = await GoogleSheetsService.getBusinessInfo();
+    const businessInfo = await BotDataService.getBusinessInfo();
 
     const currentDateStr = new Intl.DateTimeFormat('es-AR', {
       dateStyle: 'full',
@@ -34,11 +34,11 @@ IMPORTANTE: Hoy es ${currentDateStr}. Todas las fechas relativas (mañana, la pr
 Aquí tienes información específica del negocio (Horarios, precios, dirección):
 ${businessInfo}
 
-Responde siempre basándote en esta información (precios, horarios, etc). IMPORTANTE: Esta información se actualiza constantemente. SIEMPRE debes priorizar esta información por encima de lo que se haya dicho en mensajes anteriores del historial. Si el precio u horario aquí es diferente al que mencionaste antes, corrige y usa el nuevo. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
+Responde siempre basándote en esta información (precios, horarios, etc). IMPORTANTE: Esta información se actualiza constantemente en la base de datos. SIEMPRE debes priorizar esta información por encima de lo que se haya dicho en mensajes anteriores del historial. Si el precio u horario aquí es diferente al que mencionaste antes, corrige y usa el nuevo. Si te preguntan algo que no está aquí, indica de manera educada que no tienes esa información o que pronto se contactarán con ellos. No inventes datos. 
 Si el cliente desea agendar un turno, primero verifica la disponibilidad con check_availability y luego utiliza book_appointment para agendarlo, informándole al cliente. Si quiere cambiar o reprogramar su turno, usa reschedule_appointment.
-Para consultar el costo o precio de una reparación, utiliza get_repair_cost buscando por el modelo del equipo o el problema. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
+Para consultar el costo, calidades disponibles o tiempo de demora de una reparación, utiliza get_repair_cost buscando por el modelo del equipo (y opcionalmente la parte a reparar). Si existen varias opciones o calidades para esa reparación (ej: económica, buena, original), detállale todas las opciones disponibles con su precio, tiempo de demora y detalles para que el cliente pueda elegir. NUNCA le digas al cliente que puede consultar el estado de una reparación en curso (la empresa no ofrece ese seguimiento por este medio).
 Para cotizar un equipo usado o plan canje, utiliza get_plan_canje_info buscando por el modelo del equipo.
-Para consultar stock de accesorios (fundas, cargadores, blindex, auriculares, etc.), utiliza get_accessory_stock buscando por el accesorio y modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.
+Para consultar stock de accesorios o productos (fundas, cargadores, blindex, auriculares, equipos, etc.), utiliza get_accessory_stock buscando por el producto o modelo. IMPORTANTE: Si la información devuelta por get_accessory_stock contiene una URL o ruta de imagen, SIEMPRE debes incluir la imagen y mostrar TODOS los resultados (fotos, precios, descripción). Utiliza el formato exacto [IMAGE: url_de_la_imagen] en una línea separada para cada imagen que vayas a enviar.
 Para mantener el CRM sincronizado, usa SIEMPRE la herramienta update_crm_status cuando el usuario muestre interés en un producto/servicio, agende un turno, o cuando notes un CAMBIO en su estado de ánimo (sentiment: FELIZ, NEUTRAL, FRUSTRADO) o nivel de urgencia (isUrgent). Si el cliente estaba enojado y ahora está contento, o si ya no tiene urgencia, DEBES usar update_crm_status para reflejar su estado ACTUAL.
 Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicación, horarios, métodos de pago, garantías, etc.), DEBES usar la herramienta log_faq para registrarla.`;
 
@@ -202,13 +202,13 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
           apiResponse = await AppointmentService.rescheduleAppointment(userId, date as string, time as string, reason as string);
         } else if (call.name === "get_repair_cost") {
           const query = args.query;
-          apiResponse = await GoogleSheetsService.searchInSheet(process.env.REPARACIONES_SPREADSHEET_ID, query as string);
+          apiResponse = await BotDataService.searchRepairs(query as string);
         } else if (call.name === "get_plan_canje_info") {
           const model = args.model;
-          apiResponse = await GoogleSheetsService.searchInSheet(process.env.PLAN_CANJE_SPREADSHEET_ID, model as string);
+          apiResponse = await BotDataService.searchPlanCanje(model as string);
         } else if (call.name === "get_accessory_stock") {
           const query = args.query;
-          apiResponse = await GoogleSheetsService.searchInSheet(process.env.ACCESORIOS_SPREADSHEET_ID, query as string);
+          apiResponse = await BotDataService.searchProducts(query as string);
         } else if (call.name === "update_crm_status") {
           const { status, intent, sentiment, isUrgent } = args;
           await ConversationService.updateUserCRM(userId, status as string, intent as string, sentiment as string, isUrgent as boolean);

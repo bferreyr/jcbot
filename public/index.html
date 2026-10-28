@@ -42,6 +42,9 @@
                 <div class="nav-item" id="navProducts" onclick="switchTab('products')" style="display: none;">
                     <i class='bx bx-shopping-bag'></i> Productos
                 </div>
+                <div class="nav-item" id="navBotData" onclick="switchTab('botData')" style="display: none;">
+                    <i class='bx bx-wrench'></i> Reparaciones y Bot
+                </div>
                 <div class="nav-item" id="navStaff" onclick="switchTab('staff')" style="display: none;">
                     <i class='bx bx-group'></i> Personal
                 </div>
@@ -266,8 +269,8 @@
             <main class="products-area" id="productsArea" style="display: none; flex-direction: column; width: 100%; padding: 20px; overflow-y: auto;">
                 <header class="agenda-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                     <div>
-                        <h2 style="margin-top: 0;">Gestión de Productos</h2>
-                        <p style="margin-bottom: 0;">Sube productos y publícalos directamente en Instagram (Feed/Historias).</p>
+                        <h2 style="margin-top: 0;">Gestión de Productos y Accesorios</h2>
+                        <p style="margin-bottom: 0;">Los productos cargados aquí son usados por el Bot de WhatsApp para responder consultas de stock/precios (con foto) y pueden publicarse en Instagram.</p>
                     </div>
                     <button class="broadcast-btn" onclick="openCreateProductModal()">
                         <i class='bx bx-plus'></i> Nuevo Producto
@@ -299,6 +302,246 @@
                     </div>
                 </div>
             </main>
+
+            <!-- Bot Data Area (Reparaciones, Plan Canje, Info del Negocio) -->
+            <main class="products-area" id="botDataArea" style="display: none; flex-direction: column; width: 100%; padding: 20px; overflow-y: auto;">
+                <header class="agenda-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="margin-top: 0;">Base de Conocimiento del Bot</h2>
+                        <p style="margin-bottom: 0;">Carga y administra los precios de reparaciones, calidades de repuestos, plan canje e información del negocio que el bot responde por WhatsApp en tiempo real.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="subTabRepairsBtn" onclick="switchBotSubTab('repairs')" class="broadcast-btn" style="margin: 0;">
+                            <i class='bx bx-wrench'></i> Reparaciones
+                        </button>
+                        <button type="button" id="subTabCanjeBtn" onclick="switchBotSubTab('canje')" class="broadcast-btn" style="margin: 0; background: var(--bg-surface); border: 1px solid var(--border-color);">
+                            <i class='bx bx-refresh'></i> Plan Canje
+                        </button>
+                        <button type="button" id="subTabInfoBtn" onclick="switchBotSubTab('info')" class="broadcast-btn" style="margin: 0; background: var(--bg-surface); border: 1px solid var(--border-color);">
+                            <i class='bx bx-store'></i> Info del Negocio
+                        </button>
+                    </div>
+                </header>
+
+                <!-- SUB-TAB 1: REPARACIONES -->
+                <div id="botSubRepairs" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="glass-panel advanced" style="flex: none;">
+                        <div class="advanced-header" style="margin-bottom: 10px;">
+                            <i class='bx bx-plus-circle' style="color:var(--accent); font-size:1.5rem;"></i>
+                            <h3>Cargar Reparación</h3>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                            Puedes cargar varias opciones para un mismo modelo y repuesto (por ejemplo: batería económica, buena u original). Usa el botón <strong>"Guardar y Cargar Otra Calidad"</strong> para no volver a escribir el modelo.
+                        </p>
+                        <form id="createRepairForm" onsubmit="createRepair(event, false)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Modelo del Celular *</label>
+                                <input type="text" id="repModel" list="modelsList" placeholder="Ej: iPhone 13, S22 Ultra..." required class="modern-select" style="width: 100%;">
+                                <datalist id="modelsList"></datalist>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Parte a Reparar *</label>
+                                <input type="text" id="repPart" list="partsList" placeholder="Ej: Batería, Pantalla..." required class="modern-select" style="width: 100%;">
+                                <datalist id="partsList">
+                                    <option value="Batería"></option>
+                                    <option value="Módulo / Pantalla"></option>
+                                    <option value="Pin de Carga"></option>
+                                    <option value="Vidrio / Glass"></option>
+                                    <option value="Tapa Trasera"></option>
+                                    <option value="Cámara Trasera"></option>
+                                    <option value="Cámara Frontal"></option>
+                                    <option value="Auricular / Parlante"></option>
+                                    <option value="Placa / Microelectrónica"></option>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tipo / Calidad *</label>
+                                <input type="text" id="repQuality" list="qualitiesList" placeholder="Ej: Económica, Buena, Original..." required class="modern-select" style="width: 100%;">
+                                <datalist id="qualitiesList">
+                                    <option value="Económica"></option>
+                                    <option value="Buena / Calidad Media (AAA)"></option>
+                                    <option value="Original / Premium"></option>
+                                    <option value="Incell"></option>
+                                    <option value="OLED"></option>
+                                    <option value="Service Pack Original"></option>
+                                    <option value="Estándar (Única opción)"></option>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Precio ($) *</label>
+                                <input type="text" id="repPrice" placeholder="Ej: $45.000" required class="modern-select" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tiempo de Demora *</label>
+                                <input type="text" id="repTime" list="timesList" placeholder="Ej: 1 a 2 horas" required class="modern-select" style="width: 100%;">
+                                <datalist id="timesList">
+                                    <option value="30 a 60 minutos"></option>
+                                    <option value="1 a 2 horas"></option>
+                                    <option value="2 a 4 horas"></option>
+                                    <option value="En el día"></option>
+                                    <option value="24 a 48 hs"></option>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Detalles / Garantía (Opcional)</label>
+                                <input type="text" id="repNotes" placeholder="Ej: 3 meses de garantía" class="modern-select" style="width: 100%;">
+                            </div>
+                            <div style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
+                                <button type="submit" class="broadcast-btn" style="margin: 0;">
+                                    <i class='bx bx-save'></i> Guardar Reparación
+                                </button>
+                                <button type="button" onclick="createRepair(event, true)" class="broadcast-btn" style="margin: 0; background: rgba(6, 182, 212, 0.15); color: var(--accent); border: 1px solid var(--accent);">
+                                    <i class='bx bx-layer-plus'></i> Guardar y Cargar Otra Calidad (Mismo Modelo)
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="contacts-table-container glass-panel advanced">
+                        <div class="advanced-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class='bx bx-wrench' style="color:var(--accent); font-size:1.5rem;"></i>
+                                <h3>Lista de Precios de Reparaciones (<span id="repairsCountBadge">0</span>)</h3>
+                            </div>
+                            <input type="text" id="repairSearch" placeholder="Buscar por modelo, parte o calidad..." onkeyup="filterRepairs()" class="modern-select" style="width: 100%; max-width: 350px;">
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="modern-table" style="width: 100%; min-width: 750px;">
+                                <thead>
+                                    <tr>
+                                        <th>Modelo</th>
+                                        <th>Parte a Reparar</th>
+                                        <th>Tipo / Calidad</th>
+                                        <th>Precio</th>
+                                        <th>Demora</th>
+                                        <th>Detalles / Garantía</th>
+                                        <th style="text-align: right; width: 150px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repairsTableBody">
+                                    <tr><td colspan="7" style="text-align: center; padding: 20px;">Cargando reparaciones...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB 2: PLAN CANJE -->
+                <div id="botSubCanje" style="display: none; flex-direction: column; gap: 20px;">
+                    <div class="glass-panel advanced" style="flex: none;">
+                        <div class="advanced-header" style="margin-bottom: 10px;">
+                            <i class='bx bx-plus-circle' style="color:var(--accent); font-size:1.5rem;"></i>
+                            <h3>Cargar Equipo para Plan Canje</h3>
+                        </div>
+                        <form id="createCanjeForm" onsubmit="createPlanCanje(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Modelo del Equipo *</label>
+                                <input type="text" id="canjeModel" placeholder="Ej: iPhone 12 64GB" required class="modern-select" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Condición / Requisitos *</label>
+                                <input type="text" id="canjeCondition" placeholder="Ej: Batería +85%, sin detalles" required class="modern-select" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Valor de Toma / Precio *</label>
+                                <input type="text" id="canjePrice" placeholder="Ej: $280 USD o $320.000" required class="modern-select" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Notas (Opcional)</label>
+                                <input type="text" id="canjeNotes" placeholder="Ej: Sujeto a revisión técnica" class="modern-select" style="width: 100%;">
+                            </div>
+                            <div>
+                                <button type="submit" class="broadcast-btn" style="margin: 0; width: 100%;">
+                                    <i class='bx bx-save'></i> Guardar en Plan Canje
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="contacts-table-container glass-panel advanced">
+                        <div class="advanced-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class='bx bx-refresh' style="color:var(--accent); font-size:1.5rem;"></i>
+                                <h3>Equipos en Plan Canje</h3>
+                            </div>
+                            <input type="text" id="canjeSearch" placeholder="Buscar modelo en Plan Canje..." onkeyup="filterPlanCanje()" class="modern-select" style="width: 100%; max-width: 350px;">
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="modern-table" style="width: 100%; min-width: 650px;">
+                                <thead>
+                                    <tr>
+                                        <th>Modelo</th>
+                                        <th>Condición / Requisitos</th>
+                                        <th>Valor de Toma</th>
+                                        <th>Notas</th>
+                                        <th style="text-align: right; width: 120px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="canjeTableBody">
+                                    <tr><td colspan="5" style="text-align: center; padding: 20px;">Cargando Plan Canje...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB 3: INFO DEL NEGOCIO -->
+                <div id="botSubInfo" style="display: none; flex-direction: column; gap: 20px;">
+                    <div class="glass-panel advanced" style="flex: none;">
+                        <div class="advanced-header" style="margin-bottom: 10px;">
+                            <i class='bx bx-plus-circle' style="color:var(--accent); font-size:1.5rem;"></i>
+                            <h3>Agregar Información del Negocio</h3>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                            Carga aquí horarios de atención, dirección, medios de pago, garantías o cualquier regla que el bot deba conocer para responder a los clientes.
+                        </p>
+                        <form id="createInfoForm" onsubmit="createBusinessInfo(event)" style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 12px; align-items: end;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tema / Categoría *</label>
+                                <input type="text" id="infoKey" list="infoKeysList" placeholder="Ej: Horarios, Dirección, Medios de pago..." required class="modern-select" style="width: 100%;">
+                                <datalist id="infoKeysList">
+                                    <option value="Horarios de atención"></option>
+                                    <option value="Dirección / Ubicación"></option>
+                                    <option value="Medios de pago"></option>
+                                    <option value="Garantías"></option>
+                                    <option value="Envíos"></option>
+                                    <option value="Aclaración importante"></option>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Información / Respuesta para el Bot *</label>
+                                <input type="text" id="infoValue" placeholder="Ej: Lunes a Viernes de 9:00 a 18:00 hs. Efectivo, transferencia o tarjeta..." required class="modern-select" style="width: 100%;">
+                            </div>
+                            <div>
+                                <button type="submit" class="broadcast-btn" style="margin: 0;">
+                                    <i class='bx bx-save'></i> Guardar Dato
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="contacts-table-container glass-panel advanced">
+                        <div class="advanced-header">
+                            <i class='bx bx-store' style="color:var(--accent); font-size:1.5rem;"></i>
+                            <h3>Datos Actuales del Negocio</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="modern-table" style="width: 100%; min-width: 500px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 250px;">Tema / Categoría</th>
+                                        <th>Información que usa el Bot</th>
+                                        <th style="text-align: right; width: 120px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="infoTableBody">
+                                    <tr><td colspan="3" style="text-align: center; padding: 20px;">Cargando información...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
         
         <!-- Modal Crear Producto -->
@@ -306,13 +549,80 @@
             <div class="modal-content glass-panel" style="max-width: 400px; text-align: left;">
                 <h3 style="margin-top:0;">Nuevo Producto</h3>
                 <form id="createProductForm" onsubmit="createProduct(event)" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
-                    <input type="text" id="prodName" placeholder="Nombre del producto" required class="modern-select">
-                    <textarea id="prodDesc" placeholder="Descripción detallada..." required rows="3" class="modern-select" style="resize: vertical;"></textarea>
+                    <input type="text" id="prodName" placeholder="Nombre del producto (ej: Funda iPhone 13)" required class="modern-select">
+                    <textarea id="prodDesc" placeholder="Descripción detallada, colores, modelos compatibles..." required rows="3" class="modern-select" style="resize: vertical;"></textarea>
                     <input type="number" id="prodPrice" placeholder="Precio ($)" required step="0.01" class="modern-select">
-                    <input type="file" id="prodImage" accept="image/*" required class="modern-select" style="padding: 10px;">
+                    <input type="file" id="prodImage" accept="image/*" class="modern-select" style="padding: 10px;">
+                    <small style="color: var(--text-secondary);">Imagen opcional (si la subes, el bot la enviará por WhatsApp y podrás publicarla en Instagram).</small>
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
                         <button type="submit" class="broadcast-btn" style="flex:1;">Guardar Producto</button>
                         <button type="button" onclick="closeCreateProductModal()" class="broadcast-btn" style="flex:1; background: var(--bg-surface);">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Editar Reparación -->
+        <div class="modal-overlay" id="editRepairModal" style="display: none;">
+            <div class="modal-content glass-panel" style="max-width: 450px; text-align: left;">
+                <h3 style="margin-top:0;">Editar Reparación</h3>
+                <form id="editRepairForm" onsubmit="submitEditRepair(event)" style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                    <input type="hidden" id="editRepId">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Modelo del Celular</label>
+                    <input type="text" id="editRepModel" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Parte a Reparar</label>
+                    <input type="text" id="editRepPart" list="partsList" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Tipo / Calidad</label>
+                    <input type="text" id="editRepQuality" list="qualitiesList" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Precio ($)</label>
+                    <input type="text" id="editRepPrice" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Tiempo de Demora</label>
+                    <input type="text" id="editRepTime" list="timesList" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Detalles / Garantía (Opcional)</label>
+                    <input type="text" id="editRepNotes" class="modern-select">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" class="broadcast-btn" style="flex:1;">Guardar Cambios</button>
+                        <button type="button" onclick="closeModal('editRepairModal')" class="broadcast-btn" style="flex:1; background: var(--bg-surface);">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Editar Plan Canje -->
+        <div class="modal-overlay" id="editCanjeModal" style="display: none;">
+            <div class="modal-content glass-panel" style="max-width: 450px; text-align: left;">
+                <h3 style="margin-top:0;">Editar Plan Canje</h3>
+                <form id="editCanjeForm" onsubmit="submitEditCanje(event)" style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                    <input type="hidden" id="editCanjeId">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Modelo del Equipo</label>
+                    <input type="text" id="editCanjeModel" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Condición / Requisitos</label>
+                    <input type="text" id="editCanjeCondition" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Valor de Toma / Precio</label>
+                    <input type="text" id="editCanjePrice" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Notas (Opcional)</label>
+                    <input type="text" id="editCanjeNotes" class="modern-select">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" class="broadcast-btn" style="flex:1;">Guardar Cambios</button>
+                        <button type="button" onclick="closeModal('editCanjeModal')" class="broadcast-btn" style="flex:1; background: var(--bg-surface);">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Editar Info del Negocio -->
+        <div class="modal-overlay" id="editInfoModal" style="display: none;">
+            <div class="modal-content glass-panel" style="max-width: 450px; text-align: left;">
+                <h3 style="margin-top:0;">Editar Información del Negocio</h3>
+                <form id="editInfoForm" onsubmit="submitEditInfo(event)" style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                    <input type="hidden" id="editInfoId">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Tema / Categoría</label>
+                    <input type="text" id="editInfoKey" list="infoKeysList" required class="modern-select">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Información / Respuesta</label>
+                    <textarea id="editInfoValue" rows="4" required class="modern-select" style="resize: vertical;"></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" class="broadcast-btn" style="flex:1;">Guardar Cambios</button>
+                        <button type="button" onclick="closeModal('editInfoModal')" class="broadcast-btn" style="flex:1; background: var(--bg-surface);">Cancelar</button>
                     </div>
                 </form>
             </div>

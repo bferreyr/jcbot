@@ -97,13 +97,20 @@ export const receiveMessage = async (req: Request, res: Response): Promise<void>
 
         const reply = await GeminiService.generateResponse(user.id, mappedHistory, msgBody);
 
-        const imageRegex = /\[IMAGE:\s*(https?:\/\/[^\]]+)\]/g;
+        const imageRegex = /\[IMAGE:\s*([^\]]+)\]/g;
         let match;
         const imagesToSend: string[] = [];
         let textReply = reply;
+        const baseUrl = (process.env.PUBLIC_DOMAIN || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
 
         while ((match = imageRegex.exec(reply)) !== null) {
-          imagesToSend.push(match[1].trim());
+          let rawUrl = match[1].trim();
+          if (rawUrl.startsWith("/")) {
+            rawUrl = `${baseUrl}${rawUrl}`;
+          }
+          if (rawUrl.startsWith("http")) {
+            imagesToSend.push(rawUrl);
+          }
         }
 
         textReply = textReply.replace(imageRegex, '').trim();

@@ -274,4 +274,208 @@ router.post("/broadcast", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
   }
 });
 
+// ==========================================
+// REPAIRS (REPARACIONES) -> ADMIN, DIOS
+// ==========================================
+
+router.get("/repairs", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
+  try {
+    const repairs = await prisma.repair.findMany({
+      orderBy: [{ model: "asc" }, { part: "asc" }, { createdAt: "desc" }]
+    });
+    res.json(repairs);
+  } catch (error) {
+    console.error("Error fetching repairs:", error);
+    res.status(500).json({ error: "Error al obtener las reparaciones" });
+  }
+});
+
+router.post("/repairs", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { model, part, quality, price, estimatedTime, notes } = req.body;
+    if (!model || !part || !quality || !price || !estimatedTime) {
+      return res.status(400).json({ error: "Modelo, parte, calidad, precio y demora son obligatorios" });
+    }
+    const repair = await prisma.repair.create({
+      data: {
+        model: String(model).trim(),
+        part: String(part).trim(),
+        quality: String(quality).trim(),
+        price: String(price).trim(),
+        estimatedTime: String(estimatedTime).trim(),
+        notes: notes ? String(notes).trim() : null
+      }
+    });
+    res.status(201).json(repair);
+  } catch (error) {
+    console.error("Error creating repair:", error);
+    res.status(500).json({ error: "Error al guardar la reparación" });
+  }
+});
+
+router.put("/repairs/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { model, part, quality, price, estimatedTime, notes } = req.body;
+    const updated = await prisma.repair.update({
+      where: { id },
+      data: {
+        model: String(model).trim(),
+        part: String(part).trim(),
+        quality: String(quality).trim(),
+        price: String(price).trim(),
+        estimatedTime: String(estimatedTime).trim(),
+        notes: notes ? String(notes).trim() : null
+      }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error("Error updating repair:", error);
+    res.status(500).json({ error: "Error al actualizar la reparación" });
+  }
+});
+
+router.delete("/repairs/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.repair.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting repair:", error);
+    res.status(500).json({ error: "Error al eliminar la reparación" });
+  }
+});
+
+// ==========================================
+// PLAN CANJE -> ADMIN, DIOS
+// ==========================================
+
+router.get("/plan-canje", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
+  try {
+    const items = await prisma.planCanje.findMany({
+      orderBy: [{ model: "asc" }, { createdAt: "desc" }]
+    });
+    res.json(items);
+  } catch (error) {
+    console.error("Error fetching plan canje:", error);
+    res.status(500).json({ error: "Error al obtener Plan Canje" });
+  }
+});
+
+router.post("/plan-canje", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { model, condition, price, notes } = req.body;
+    if (!model || !condition || !price) {
+      return res.status(400).json({ error: "Modelo, condición y valor son obligatorios" });
+    }
+    const item = await prisma.planCanje.create({
+      data: {
+        model: String(model).trim(),
+        condition: String(condition).trim(),
+        price: String(price).trim(),
+        notes: notes ? String(notes).trim() : null
+      }
+    });
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("Error creating plan canje:", error);
+    res.status(500).json({ error: "Error al guardar en Plan Canje" });
+  }
+});
+
+router.put("/plan-canje/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { model, condition, price, notes } = req.body;
+    const updated = await prisma.planCanje.update({
+      where: { id },
+      data: {
+        model: String(model).trim(),
+        condition: String(condition).trim(),
+        price: String(price).trim(),
+        notes: notes ? String(notes).trim() : null
+      }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error("Error updating plan canje:", error);
+    res.status(500).json({ error: "Error al actualizar Plan Canje" });
+  }
+});
+
+router.delete("/plan-canje/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.planCanje.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting plan canje:", error);
+    res.status(500).json({ error: "Error al eliminar de Plan Canje" });
+  }
+});
+
+// ==========================================
+// BUSINESS INFO (INFO DEL NEGOCIO) -> ADMIN, DIOS
+// ==========================================
+
+router.get("/business-info", requireRole(["ADMIN", "DIOS", "EXPERTO"]), async (req, res) => {
+  try {
+    const info = await prisma.businessInfo.findMany({
+      orderBy: { createdAt: "asc" }
+    });
+    res.json(info);
+  } catch (error) {
+    console.error("Error fetching business info:", error);
+    res.status(500).json({ error: "Error al obtener información del negocio" });
+  }
+});
+
+router.post("/business-info", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!key || !value) {
+      return res.status(400).json({ error: "El tema y la descripción son obligatorios" });
+    }
+    const item = await prisma.businessInfo.create({
+      data: {
+        key: String(key).trim(),
+        value: String(value).trim()
+      }
+    });
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("Error creating business info:", error);
+    res.status(500).json({ error: "Error al guardar información del negocio" });
+  }
+});
+
+router.put("/business-info/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { key, value } = req.body;
+    const updated = await prisma.businessInfo.update({
+      where: { id },
+      data: {
+        key: String(key).trim(),
+        value: String(value).trim()
+      }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error("Error updating business info:", error);
+    res.status(500).json({ error: "Error al actualizar información del negocio" });
+  }
+});
+
+router.delete("/business-info/:id", requireRole(["ADMIN", "DIOS"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.businessInfo.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting business info:", error);
+    res.status(500).json({ error: "Error al eliminar información del negocio" });
+  }
+});
+
 export default router;

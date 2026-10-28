@@ -134,6 +134,8 @@ function applyRoles() {
     if (role === 'ADMIN' || role === 'DIOS') {
         const navProducts = document.getElementById('navProducts');
         if(navProducts) navProducts.style.display = 'flex';
+        const navBotData = document.getElementById('navBotData');
+        if(navBotData) navBotData.style.display = 'flex';
     }
     
     if (role === 'JUNIOR') {
@@ -367,6 +369,7 @@ function switchTab(tab) {
     navMetrics.classList.remove('active');
     if (document.getElementById('navStaff')) document.getElementById('navStaff').classList.remove('active');
     if (document.getElementById('navProducts')) document.getElementById('navProducts').classList.remove('active');
+    if (document.getElementById('navBotData')) document.getElementById('navBotData').classList.remove('active');
     
     chatsSidebar.style.display = 'none';
     chatArea.style.display = 'none';
@@ -374,6 +377,7 @@ function switchTab(tab) {
     metricsArea.style.display = 'none';
     document.getElementById('staffArea').style.display = 'none';
     if (document.getElementById('productsArea')) document.getElementById('productsArea').style.display = 'none';
+    if (document.getElementById('botDataArea')) document.getElementById('botDataArea').style.display = 'none';
     
     if (tab === 'chats') {
         if (currentUserData?.role === 'JUNIOR') return; // Bloqueado
@@ -415,6 +419,14 @@ function switchTab(tab) {
         document.getElementById('navProducts').classList.add('active');
         document.getElementById('productsArea').style.display = 'flex';
         loadProducts();
+    } else if (tab === 'botData') {
+        if (currentUserData?.role !== 'ADMIN' && currentUserData?.role !== 'DIOS') return;
+        localStorage.setItem('activeTab', 'botData');
+        document.getElementById('navBotData').classList.add('active');
+        document.getElementById('botDataArea').style.display = 'flex';
+        loadRepairs();
+        loadPlanCanje();
+        loadBusinessInfo();
     }
 }
 
@@ -864,13 +876,16 @@ async function loadProducts() {
         products.forEach(p => {
             const tr = document.createElement('tr');
             tr.className = 'product-row';
+            const imgHtml = p.imageUrl
+                ? `<img src="${p.imageUrl}" alt="${p.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">`
+                : `<div style="width: 50px; height: 50px; border-radius: 4px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);"><i class='bx bx-package' style="font-size: 1.4rem;"></i></div>`;
             tr.innerHTML = `
                 <td>
-                    <img src="${p.imageUrl}" alt="${p.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    ${imgHtml}
                 </td>
                 <td class="product-name-cell" style="font-weight: bold; color: var(--accent);">${p.name}</td>
                 <td class="product-desc-cell" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.description}">${p.description}</td>
-                <td>${p.price}</td>
+                <td>$${p.price}</td>
                 <td style="color: ${p.isPublished ? 'var(--accent)' : 'var(--text-secondary)'};">
                     <i class='bx ${p.isPublished ? 'bx-check-circle' : 'bx-time'}'></i>
                     ${p.isPublished ? 'Publicado' : 'No publicado'}
@@ -991,26 +1006,23 @@ async function createProduct(e) {
     const price = document.getElementById('prodPrice').value;
     const imageFile = document.getElementById('prodImage').files[0];
     
-    if (!imageFile) {
-        alert("Selecciona una imagen");
-        return;
-    }
-
-    // Procesa la imagen a formato cuadrado 1:1 para evitar errores de Instagram
-    let processedBlob;
-    try {
-        processedBlob = await processImageToSquare(imageFile);
-    } catch (err) {
-        console.error("Error processing image:", err);
-        alert("Error al procesar la imagen para Instagram");
-        return;
-    }
-    
     const formData = new FormData();
     formData.append('name', name);
     formData.append('description', desc);
     formData.append('price', price);
-    formData.append('image', processedBlob, imageFile.name.replace(/\.[^/.]+$/, "") + ".jpg");
+
+    if (imageFile) {
+        // Procesa la imagen a formato cuadrado 1:1 para evitar errores de Instagram
+        let processedBlob;
+        try {
+            processedBlob = await processImageToSquare(imageFile);
+            formData.append('image', processedBlob, imageFile.name.replace(/\.[^/.]+$/, "") + ".jpg");
+        } catch (err) {
+            console.error("Error processing image:", err);
+            alert("Error al procesar la imagen");
+            return;
+        }
+    }
     
     try {
         const res = await fetch('/api/products', {
@@ -1152,5 +1164,474 @@ async function submitEditProduct(e) {
     } catch (err) {
         console.error(err);
         alert("Error de red");
+    }
+}
+
+// ==========================================
+// BOT DATA: REPARACIONES, PLAN CANJE, INFO DEL NEGOCIO
+// ==========================================
+
+window.allRepairs = [];
+window.allPlanCanje = [];
+window.allBusinessInfo = [];
+
+function switchBotSubTab(subTab) {
+    const subRepairs = document.getElementById('botSubRepairs');
+    const subCanje = document.getElementById('botSubCanje');
+    const subInfo = document.getElementById('botSubInfo');
+
+    const btnRepairs = document.getElementById('subTabRepairsBtn');
+    const btnCanje = document.getElementById('subTabCanjeBtn');
+    const btnInfo = document.getElementById('subTabInfoBtn');
+
+    const inactiveStyle = 'background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary);';
+    const activeStyle = 'background: linear-gradient(135deg, var(--accent), #3b82f6); border: none; color: white;';
+
+    subRepairs.style.display = 'none';
+    subCanje.style.display = 'none';
+    subInfo.style.display = 'none';
+
+    btnRepairs.style.cssText = 'margin: 0; ' + inactiveStyle;
+    btnCanje.style.cssText = 'margin: 0; ' + inactiveStyle;
+    btnInfo.style.cssText = 'margin: 0; ' + inactiveStyle;
+
+    if (subTab === 'repairs') {
+        subRepairs.style.display = 'flex';
+        btnRepairs.style.cssText = 'margin: 0; ' + activeStyle;
+    } else if (subTab === 'canje') {
+        subCanje.style.display = 'flex';
+        btnCanje.style.cssText = 'margin: 0; ' + activeStyle;
+    } else if (subTab === 'info') {
+        subInfo.style.display = 'flex';
+        btnInfo.style.cssText = 'margin: 0; ' + activeStyle;
+    }
+}
+
+function formatPriceBadge(price) {
+    const str = String(price || '').trim();
+    if (!str) return '-';
+    if (str.startsWith('$') || /usd|u\$s|pesos|consultar/i.test(str)) return str;
+    return '$' + str;
+}
+
+// --- REPARACIONES ---
+
+async function loadRepairs() {
+    try {
+        const res = await fetch('/api/repairs');
+        if (!res.ok) return;
+        const repairs = await res.json();
+        window.allRepairs = repairs;
+
+        const countBadge = document.getElementById('repairsCountBadge');
+        if (countBadge) countBadge.textContent = repairs.length;
+
+        // Autocomplete de modelos existentes
+        const modelsList = document.getElementById('modelsList');
+        if (modelsList) {
+            const uniqueModels = [...new Set(repairs.map(r => r.model))];
+            modelsList.innerHTML = uniqueModels.map(m => `<option value="${m.replace(/"/g, '&quot;')}"></option>`).join('');
+        }
+
+        const tbody = document.getElementById('repairsTableBody');
+        tbody.innerHTML = '';
+
+        if (repairs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 20px;">No hay reparaciones cargadas todavía. Usa el formulario de arriba para cargar la primera.</td></tr>';
+            return;
+        }
+
+        repairs.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.className = 'repair-row';
+            tr.dataset.search = `${r.model} ${r.part} ${r.quality} ${r.notes || ''}`.toLowerCase();
+            tr.innerHTML = `
+                <td style="font-weight: 600; color: var(--text-primary);">${r.model}</td>
+                <td><span class="status-badge" style="background: rgba(6, 182, 212, 0.12); color: var(--accent);">${r.part}</span></td>
+                <td><span class="status-badge" style="background: rgba(168, 85, 247, 0.12); color: #c084fc;">${r.quality}</span></td>
+                <td style="font-weight: 700; color: #22c55e;">${formatPriceBadge(r.price)}</td>
+                <td><i class='bx bx-time-five' style="color: var(--text-secondary);"></i> ${r.estimatedTime}</td>
+                <td style="color: var(--text-secondary); font-size: 0.9rem;">${r.notes || '-'}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="icon-btn" onclick="prefillRepairVariant('${r.id}')" title="Agregar otra calidad para este mismo Modelo y Parte" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-layer-plus' style="color: #22c55e;"></i>
+                    </button>
+                    <button class="icon-btn" onclick="openEditRepairModal('${r.id}')" title="Editar Reparación" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-pencil' style="color: var(--accent);"></i>
+                    </button>
+                    <button class="icon-btn" onclick="deleteRepair('${r.id}')" title="Eliminar Reparación" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-trash' style="color: #ef4444;"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        filterRepairs();
+    } catch (error) {
+        console.error('Error loading repairs:', error);
+    }
+}
+
+async function createRepair(e, keepModelAndPart = false) {
+    if (e) e.preventDefault();
+
+    const model = document.getElementById('repModel').value.trim();
+    const part = document.getElementById('repPart').value.trim();
+    const quality = document.getElementById('repQuality').value.trim();
+    const price = document.getElementById('repPrice').value.trim();
+    const estimatedTime = document.getElementById('repTime').value.trim();
+    const notes = document.getElementById('repNotes').value.trim();
+
+    if (!model || !part || !quality || !price || !estimatedTime) {
+        alert("Por favor completa Modelo, Parte a reparar, Calidad, Precio y Tiempo de demora.");
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/repairs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, part, quality, price, estimatedTime, notes })
+        });
+
+        if (res.ok) {
+            if (keepModelAndPart) {
+                document.getElementById('repQuality').value = '';
+                document.getElementById('repPrice').value = '';
+                document.getElementById('repQuality').focus();
+            } else {
+                document.getElementById('createRepairForm').reset();
+                document.getElementById('repModel').focus();
+            }
+            await loadRepairs();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo guardar la reparación"));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de conexión al guardar reparación");
+    }
+}
+
+function prefillRepairVariant(id) {
+    const rep = window.allRepairs.find(r => r.id === id);
+    if (!rep) return;
+
+    document.getElementById('repModel').value = rep.model;
+    document.getElementById('repPart').value = rep.part;
+    document.getElementById('repTime').value = rep.estimatedTime;
+    document.getElementById('repNotes').value = rep.notes || '';
+    document.getElementById('repQuality').value = '';
+    document.getElementById('repPrice').value = '';
+
+    const formEl = document.getElementById('createRepairForm');
+    formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => document.getElementById('repQuality').focus(), 200);
+}
+
+function openEditRepairModal(id) {
+    const rep = window.allRepairs.find(r => r.id === id);
+    if (!rep) return;
+
+    document.getElementById('editRepId').value = rep.id;
+    document.getElementById('editRepModel').value = rep.model;
+    document.getElementById('editRepPart').value = rep.part;
+    document.getElementById('editRepQuality').value = rep.quality;
+    document.getElementById('editRepPrice').value = rep.price;
+    document.getElementById('editRepTime').value = rep.estimatedTime;
+    document.getElementById('editRepNotes').value = rep.notes || '';
+
+    document.getElementById('editRepairModal').style.display = 'flex';
+}
+
+async function submitEditRepair(e) {
+    e.preventDefault();
+    const id = document.getElementById('editRepId').value;
+    const model = document.getElementById('editRepModel').value.trim();
+    const part = document.getElementById('editRepPart').value.trim();
+    const quality = document.getElementById('editRepQuality').value.trim();
+    const price = document.getElementById('editRepPrice').value.trim();
+    const estimatedTime = document.getElementById('editRepTime').value.trim();
+    const notes = document.getElementById('editRepNotes').value.trim();
+
+    try {
+        const res = await fetch('/api/repairs/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, part, quality, price, estimatedTime, notes })
+        });
+        if (res.ok) {
+            closeModal('editRepairModal');
+            loadRepairs();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo actualizar"));
+        }
+    } catch (err) {
+        alert("Error de red");
+    }
+}
+
+async function deleteRepair(id) {
+    if (!confirm("¿Seguro que deseas eliminar esta reparación?")) return;
+    try {
+        const res = await fetch('/api/repairs/' + id, { method: 'DELETE' });
+        if (res.ok) loadRepairs();
+    } catch (e) {
+        alert("Error al eliminar reparación");
+    }
+}
+
+function filterRepairs() {
+    const input = document.getElementById('repairSearch');
+    if (!input) return;
+    const query = input.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.repair-row');
+    rows.forEach(row => {
+        if (!query || row.dataset.search.includes(query)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// --- PLAN CANJE ---
+
+async function loadPlanCanje() {
+    try {
+        const res = await fetch('/api/plan-canje');
+        if (!res.ok) return;
+        const items = await res.json();
+        window.allPlanCanje = items;
+
+        const tbody = document.getElementById('canjeTableBody');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 20px;">No hay equipos en Plan Canje cargados.</td></tr>';
+            return;
+        }
+
+        items.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.className = 'canje-row';
+            tr.dataset.search = `${c.model} ${c.condition} ${c.notes || ''}`.toLowerCase();
+            tr.innerHTML = `
+                <td style="font-weight: 600; color: var(--text-primary);">${c.model}</td>
+                <td>${c.condition}</td>
+                <td style="font-weight: 700; color: #22c55e;">${formatPriceBadge(c.price)}</td>
+                <td style="color: var(--text-secondary);">${c.notes || '-'}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="icon-btn" onclick="openEditCanjeModal('${c.id}')" title="Editar" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-pencil' style="color: var(--accent);"></i>
+                    </button>
+                    <button class="icon-btn" onclick="deletePlanCanje('${c.id}')" title="Eliminar" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-trash' style="color: #ef4444;"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        filterPlanCanje();
+    } catch (error) {
+        console.error('Error loading plan canje:', error);
+    }
+}
+
+async function createPlanCanje(e) {
+    e.preventDefault();
+    const model = document.getElementById('canjeModel').value.trim();
+    const condition = document.getElementById('canjeCondition').value.trim();
+    const price = document.getElementById('canjePrice').value.trim();
+    const notes = document.getElementById('canjeNotes').value.trim();
+
+    try {
+        const res = await fetch('/api/plan-canje', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, condition, price, notes })
+        });
+        if (res.ok) {
+            document.getElementById('createCanjeForm').reset();
+            loadPlanCanje();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo guardar"));
+        }
+    } catch (err) {
+        alert("Error de red");
+    }
+}
+
+function openEditCanjeModal(id) {
+    const item = window.allPlanCanje.find(c => c.id === id);
+    if (!item) return;
+
+    document.getElementById('editCanjeId').value = item.id;
+    document.getElementById('editCanjeModel').value = item.model;
+    document.getElementById('editCanjeCondition').value = item.condition;
+    document.getElementById('editCanjePrice').value = item.price;
+    document.getElementById('editCanjeNotes').value = item.notes || '';
+
+    document.getElementById('editCanjeModal').style.display = 'flex';
+}
+
+async function submitEditCanje(e) {
+    e.preventDefault();
+    const id = document.getElementById('editCanjeId').value;
+    const model = document.getElementById('editCanjeModel').value.trim();
+    const condition = document.getElementById('editCanjeCondition').value.trim();
+    const price = document.getElementById('editCanjePrice').value.trim();
+    const notes = document.getElementById('editCanjeNotes').value.trim();
+
+    try {
+        const res = await fetch('/api/plan-canje/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, condition, price, notes })
+        });
+        if (res.ok) {
+            closeModal('editCanjeModal');
+            loadPlanCanje();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo actualizar"));
+        }
+    } catch (err) {
+        alert("Error de red");
+    }
+}
+
+async function deletePlanCanje(id) {
+    if (!confirm("¿Seguro que deseas eliminar este equipo de Plan Canje?")) return;
+    try {
+        const res = await fetch('/api/plan-canje/' + id, { method: 'DELETE' });
+        if (res.ok) loadPlanCanje();
+    } catch (e) {
+        alert("Error al eliminar");
+    }
+}
+
+function filterPlanCanje() {
+    const input = document.getElementById('canjeSearch');
+    if (!input) return;
+    const query = input.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.canje-row');
+    rows.forEach(row => {
+        if (!query || row.dataset.search.includes(query)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// --- INFO DEL NEGOCIO ---
+
+async function loadBusinessInfo() {
+    try {
+        const res = await fetch('/api/business-info');
+        if (!res.ok) return;
+        const info = await res.json();
+        window.allBusinessInfo = info;
+
+        const tbody = document.getElementById('infoTableBody');
+        tbody.innerHTML = '';
+
+        if (info.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 20px;">No hay información del negocio cargada aún (ej: Horarios, Dirección, Medios de pago).</td></tr>';
+            return;
+        }
+
+        info.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 600; color: var(--accent);">${item.key}</td>
+                <td style="white-space: pre-wrap;">${item.value}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="icon-btn" onclick="openEditInfoModal('${item.id}')" title="Editar" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-pencil' style="color: var(--accent);"></i>
+                    </button>
+                    <button class="icon-btn" onclick="deleteBusinessInfo('${item.id}')" title="Eliminar" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">
+                        <i class='bx bx-trash' style="color: #ef4444;"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading business info:', error);
+    }
+}
+
+async function createBusinessInfo(e) {
+    e.preventDefault();
+    const key = document.getElementById('infoKey').value.trim();
+    const value = document.getElementById('infoValue').value.trim();
+
+    try {
+        const res = await fetch('/api/business-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value })
+        });
+        if (res.ok) {
+            document.getElementById('createInfoForm').reset();
+            loadBusinessInfo();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo guardar"));
+        }
+    } catch (err) {
+        alert("Error de red");
+    }
+}
+
+function openEditInfoModal(id) {
+    const item = window.allBusinessInfo.find(i => i.id === id);
+    if (!item) return;
+
+    document.getElementById('editInfoId').value = item.id;
+    document.getElementById('editInfoKey').value = item.key;
+    document.getElementById('editInfoValue').value = item.value;
+
+    document.getElementById('editInfoModal').style.display = 'flex';
+}
+
+async function submitEditInfo(e) {
+    e.preventDefault();
+    const id = document.getElementById('editInfoId').value;
+    const key = document.getElementById('editInfoKey').value.trim();
+    const value = document.getElementById('editInfoValue').value.trim();
+
+    try {
+        const res = await fetch('/api/business-info/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value })
+        });
+        if (res.ok) {
+            closeModal('editInfoModal');
+            loadBusinessInfo();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "No se pudo actualizar"));
+        }
+    } catch (err) {
+        alert("Error de red");
+    }
+}
+
+async function deleteBusinessInfo(id) {
+    if (!confirm("¿Seguro que deseas eliminar este dato del negocio?")) return;
+    try {
+        const res = await fetch('/api/business-info/' + id, { method: 'DELETE' });
+        if (res.ok) loadBusinessInfo();
+    } catch (e) {
+        alert("Error al eliminar");
     }
 }

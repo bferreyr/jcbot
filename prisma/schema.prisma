@@ -76,3 +76,33 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Repair {
+  id            String   @id @default(uuid())
+  model         String
+  part          String
+  quality       String
+  price         String
+  estimatedTime String
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PlanCanje {
+  id        String   @id @default(uuid())
+  model     String
+  condition String
+  price     String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BusinessInfo {
+  id        String   @id @default(uuid())
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -23,15 +23,15 @@ export const createProduct = async (req: Request, res: Response) => {
     // multer adds `file` object to req
     const file = (req as any).file;
 
-    if (!name || !price || !file) {
-      return res.status(400).json({ error: 'Nombre, precio e imagen son obligatorios' });
+    if (!name || !price) {
+      return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
     }
 
     // Convert price to float
     const parsedPrice = parseFloat(price);
 
-    // Save product
-    const imageUrl = `/uploads/${file.filename}`; // This path assumes Express is serving static files from /public
+    // Save product (image is optional if only used for WhatsApp bot catalog)
+    const imageUrl = file ? `/uploads/${file.filename}` : '';
 
     const newProduct = await prisma.product.create({
       data: {
@@ -102,6 +102,10 @@ export const publishToInstagram = async (req: Request, res: Response) => {
 
     if (!product) {
       return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    if (!product.imageUrl) {
+      return res.status(400).json({ error: 'Este producto no tiene una imagen cargada para publicar en Instagram' });
     }
 
     // Construimos la URL completa para Instagram
