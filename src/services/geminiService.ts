@@ -4,66 +4,18 @@ import { AppointmentService } from "./appointmentService";
 import { ConversationService } from "./conversationService";
 
 export class GeminiService {
-  private static cachedDynamicModels: string[] | null = null;
-
   private static async sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
-   * Obtiene la lista de modelos candidatos, incluyendo los recomendados actualmente por la API
-   * y descubriendo dinámicamente los modelos disponibles en la cuenta si fuera necesario.
+   * Lista de modelos conversacionales oficiales con soporte completo de herramientas (Function Calling).
    */
-  private static async getModelCandidates(apiKey: string): Promise<string[]> {
-    const baseModels = [
-      "gemini-3.8-flash",
+  private static async getModelCandidates(_apiKey: string): Promise<string[]> {
+    return [
       "gemini-flash-latest",
-      "gemini-flash-lite-latest",
       "gemini-3.1-flash-lite",
     ];
-
-    if (this.cachedDynamicModels && this.cachedDynamicModels.length > 0) {
-      return [...new Set([...this.cachedDynamicModels, ...baseModels])];
-    }
-
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.models)) {
-          const validModels: string[] = data.models
-            .filter((m: any) =>
-              Array.isArray(m.supportedGenerationMethods) &&
-              m.supportedGenerationMethods.includes("generateContent") &&
-              typeof m.name === "string" &&
-              m.name.includes("gemini") &&
-              !m.name.includes("embedding") &&
-              !m.name.includes("imagen") &&
-              !m.name.includes("veo") &&
-              !m.name.includes("tts") &&
-              !m.name.includes("audio")
-            )
-            .map((m: any) => (m.name as string).replace(/^models\//, ""));
-
-          // Priorizar modelos flash
-          validModels.sort((a, b) => {
-            const aFlash = a.includes("flash") ? 0 : 1;
-            const bFlash = b.includes("flash") ? 0 : 1;
-            return aFlash - bFlash;
-          });
-
-          if (validModels.length > 0) {
-            this.cachedDynamicModels = [...new Set(["gemini-3.8-flash", ...validModels])];
-            console.log("Modelos Gemini disponibles detectados:", this.cachedDynamicModels.slice(0, 6).join(", "));
-            return this.cachedDynamicModels;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("No se pudo consultar la lista dinámica de modelos Gemini, usando lista por defecto.");
-    }
-
-    return baseModels;
   }
 
   static async generateResponse(
@@ -307,10 +259,10 @@ Si el usuario hace una pregunta general y recurrente sobre el negocio (ubicació
             return responseText || "Lo siento, no pude procesar tu mensaje.";
           } catch (err: any) {
             lastError = err;
-            const status = err?.status || (String(err?.message).includes("503") ? 503 : undefined);
-            if (status === 503 && attempt === 1) {
-              console.warn(`Modelo ${modelName} con alta demanda (503). Reintentando en 1.5s...`);
-              await this.sleep(1500);
+            const status = err?.status || (String(err?.message).includes("503") ? 503 : String(err?.message).includes("429") ? 429 : undefined);
+            if ((status === 503 || status === 429) && attempt === 1) {
+              console.warn(`Modelo ${modelName} con alta demanda (${status}). Reintentando en 2s...`);
+              await this.sleep(2000);
               continue;
             }
             console.warn(`Modelo ${modelName} falló (${status || err?.message}). Intentando siguiente modelo de respaldo...`);
