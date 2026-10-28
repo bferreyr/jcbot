@@ -253,5 +253,89 @@ export class BotDataService {
       return "Hubo un error al buscar en el catálogo de productos.";
     }
   }
+
+  /**
+   * Obtiene un resumen completo de toda la base de datos (Info del negocio, Reparaciones, Plan Canje y Productos)
+   * para inyectarlo directamente en el contexto y evitar múltiples llamadas innecesarias a la API de Gemini.
+   */
+  static async getFullBotContext(): Promise<string> {
+    try {
+      await this.ensureTables();
+
+      const [infoRows, repairs, canjeItems, products] = await Promise.all([
+        prisma.businessInfo.findMany({ orderBy: { createdAt: "asc" } }),
+        prisma.repair.findMany({ orderBy: [{ model: "asc" }, { part: "asc" }], take: 300 }),
+        prisma.planCanje.findMany({ orderBy: { model: "asc" }, take: 200 }),
+        prisma.product.findMany({ orderBy: { createdAt: "desc" }, take: 200 }),
+      ]);
+
+      const sections: string[] = [];
+
+      // 1. Info del negocio
+      if (infoRows.length > 0) {
+        sections.push(
+          "=== INFORMACIÓN GENERAL DEL NEGOCIO ===\n" +
+            infoRows.map((r) => `- ${r.key}: ${r.value}`).join("\n")
+        );
+      } else {
+        sections.push("=== INFORMACIÓN GENERAL DEL NEGOCIO ===\n(Sin datos generales cargados aún en el panel)");
+      }
+
+      // 2. Reparaciones
+      if (repairs.length > 0) {
+        sections.push(
+          "=== LISTA DE PRECIOS DE REPARACIONES ===\n" +
+            repairs
+              .map((r) => {
+                const notes = r.notes ? ` | Detalles: ${r.notes}` : "";
+                return `- Modelo: ${r.model} | Parte: ${r.part} | Calidad/Tipo: ${r.quality} | Precio: ${formatPriceDisplay(r.price)} | Demora: ${r.estimatedTime}${notes}`;
+              })
+              .join("\n")
+        );
+      } else {
+        sections.push("=== LISTA DE PRECIOS DE REPARACIONES ===\n(No hay reparaciones cargadas actualmente en el panel)");
+      }
+
+      // 3. Plan Canje
+      if (canjeItems.length > 0) {
+        sections.push(
+          "=== EQUIPOS Y VALORES DE PLAN CANJE ===\n" +
+            canjeItems
+              .map((c) => {
+                const notes = c.notes ? ` | Notas: ${c.notes}` : "";
+                return `- Modelo: ${c.model} | Condición: ${c.condition} | Valor de toma: ${formatPriceDisplay(c.price)}${notes}`;
+              })
+              .join("\n")
+        );
+      } else {
+        sections.push("=== EQUIPOS Y VALORES DE PLAN CANJE ===\n(No hay equipos cargados en Plan Canje actualmente)");
+      }
+
+      // 4. Productos / Accesorios
+      const baseDomain = (process.env.PUBLIC_DOMAIN || "").replace(/\/$/, "");
+      if (products.length > 0) {
+        sections.push(
+          "=== CATÁLOGO DE PRODUCTOS Y ACCESORIOS ===\n" +
+            products
+              .map((p) => {
+                let imgUrl = p.imageUrl || "";
+                if (imgUrl && imgUrl.startsWith("/") && baseDomain) {
+                  imgUrl = `${baseDomain}${imgUrl}`;
+                }
+                const imgPart = imgUrl ? ` | Imagen: ${imgUrl}` : "";
+                return `- Producto: ${p.name} | Descripción: ${p.description} | Precio: $${p.price}${imgPart}`;
+              })
+              .join("\n")
+        );
+      } else {
+        sections.push("=== CATÁLOGO DE PRODUCTOS Y ACCESORIOS ===\n(No hay productos cargados actualmente)");
+      }
+
+      return sections.join("\n\n");
+    } catch (error) {
+      console.error("Error obteniendo contexto completo del bot:", error);
+      return "Error al obtener datos de la base de datos.";
+    }
+  }
 }
 
